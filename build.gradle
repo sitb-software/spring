@@ -1,0 +1,94 @@
+allprojects {
+    group 'software.sitb.spring'
+    version '1.0.0.RELEASE'
+
+    repositories {
+        maven { url "http://repo.sitb.software/content/groups/public" }
+    }
+
+}
+apply from: 'libraries.gradle'
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
+    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+}
+
+
+buildscript {
+    repositories {
+        maven { url "http://repo.sitb.software/content/groups/public" }
+    }
+    dependencies {
+        classpath 'com.novoda:bintray-release:0.3.5'
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'maven-publish'
+
+    [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+
+    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+
+    configurations {
+        optional
+        provided {
+            visible = false
+        }
+        compile {
+            extendsFrom optional
+        }
+        testCompile {
+            extendsFrom provided
+        }
+    }
+
+    sourceSets {
+        main {
+            compileClasspath += configurations.optional
+            compileClasspath += configurations.provided
+        }
+    }
+
+    idea {
+        module {
+            scopes.PROVIDED.plus += [configurations.optional]
+            scopes.PROVIDED.plus += [configurations.provided]
+        }
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+
+    dependencies {
+        provided lib.logging
+        testCompile lib._test
+        compile "software.sitb.spring:cache:1.0.0.RE"
+    }
+}
+
+

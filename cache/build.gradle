@@ -1,0 +1,17 @@
+description = 'spring-cache'
+
+apply plugin: 'com.novoda.bintray-release'
+
+publish {
+    userOrg = 'sitb-software'
+    groupId = 'software.sitb.spring'
+    artifactId = 'cache'
+    publishVersion = '1.0.0.RELEASE'
+    desc = 'Spring Cache Tools'
+    website = 'https://sitb.software'
+}
+
+dependencies {
+    provided lib.spring_context
+    provided lib.xmemcached
+}
