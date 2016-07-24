@@ -87,7 +87,6 @@ subprojects {
     dependencies {
         provided lib.logging
         testCompile lib._test
-        compile "software.sitb.spring:cache:1.0.0.RE"
     }
 }
 
