@@ -1,36 +1,48 @@
-ext.spring_boot = "1.3.6.RELEASE"
-ext.spring_security = "4.1.1.RELEASE"
-ext.spring_data_commons = "1.12.2.RELEASE"
-ext.spring_data_jpa = "1.10.2.RELEASE"
-ext.spring = "4.2.7.RELEASE"
-ext.springloaded = "1.2.6.RELEASE"
-ext.hibernate = "5.1.0.Final"
-ext.jpa = "5.1.0.Final"
-ext.postgresql = "9.4.1208.jre7"
-ext.jackson = "2.6.7"
-ext.activemq = "5.12.3"
+ext.repoUrl = "https://repo.sitb.software/repository/maven-public/"
+ext.spring_boot = "1.5.2.RELEASE"
+ext.spring_security = "4.2.2.RELEASE"
+ext.spring_data_commons = "1.13.1.RELEASE"
+ext.spring_data_jpa = "1.11.1.RELEASE"
+ext.spring = "4.3.7.RELEASE"
+ext.springloaded = "1.2.7.RELEASE"
+ext.hibernate = "5.2.9.Final"
+ext.jpa = "5.2.9.Final"
+ext.postgresql = "9.4.1212.jre7"
+ext.jackson = "2.8.8"
+ext.activemq = "5.14.4"
+ext.apache_poi = "3.15"
+ext.okhttp3 = "3.8.0"
+ext.retrofit = "2.1.0"
+ext.itextpdf = "5.5.10"
+ext.groovy = "2.4.12"
 ext.lib = [
-        _test               : [
+        _test                              : [
                 "org.springframework.boot:spring-boot-starter-test:$spring_boot"
         ],
-        json                : [
+        json                               : [
                 "com.fasterxml.jackson.core:jackson-core:${jackson}",
                 "com.fasterxml.jackson.core:jackson-databind:${jackson}"
         ],
-        xml                 : [
+        xml                                : [
                 "com.fasterxml.jackson.core:jackson-core:${jackson}",
                 "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jackson}"
         ],
-        logging             : [
-                "org.springframework.boot:spring-boot-starter-logging:$spring_boot"
+        logging                            : [
+                "org.springframework.boot:spring-boot-starter-logging:$spring_boot",
+                "org.codehaus.groovy:groovy-all:${groovy}"
         ],
-        mongodb             : [
+        mongodb                            : [
                 "org.mongodb:mongo-java-driver:2.12.5"
         ],
-        drools              : [
+        drools                             : [
                 "org.drools:drools-core:6.1.0.Final",
                 "org.drools:drools-compiler:6.1.0.Final"
         ],
+        logback                            : [
+                "ch.qos.logback:logback-core:1.2.3",
+                "ch.qos.logback:logback-classic:1.2.3"
+        ],
+        slf4j_api                          : "org.slf4j:slf4j-api:1.7.25",
         spring_core                        : "org.springframework:spring-core:$spring",
         spring_beans                       : "org.springframework:spring-beans:$spring",
         spring_context                     : "org.springframework:spring-context:$spring",
@@ -39,11 +51,15 @@ ext.lib = [
         spring_data_jpa                    : "org.springframework.data:spring-data-jpa:${spring_data_jpa}",
         spring_jms                         : "org.springframework:spring-jms:$spring",
         spring_ws_core                     : "org.springframework.ws:spring-ws-core:2.2.4.RELEASE",
+        spring_messaging                   : "org.springframework:spring-messaging:4.3.7.RELEASE",
         spring_security_core               : "org.springframework.security:spring-security-core:$spring_security",
         spring_security_config             : "org.springframework.security:spring-security-config:$spring_security",
         spring_security_web                : "org.springframework.security:spring-security-web:$spring_security",
         spring_security_oauth2             : "org.springframework.security.oauth:spring-security-oauth2:2.0.8.RELEASE",
+        spring_integration_mail            : "org.springframework.integration:spring-integration-mail:$spring",
         spring_boot                        : "org.springframework.boot:spring-boot-starter:$spring_boot",
+        spring_boot_actuator               : "org.springframework.boot:spring-boot-starter-actuator:$spring_boot",
+        spring_boot_remote_shell           : "org.springframework.boot:spring-boot-starter-remote-shell:$spring_boot",
         spring_boot_aop                    : "org.springframework.boot:spring-boot-starter-aop:$spring_boot",
         spring_boot_web                    : "org.springframework.boot:spring-boot-starter-web:$spring_boot",
         srping_boot_email                  : "org.springframework.boot:spring-boot-starter-mail:$spring_boot",
@@ -55,48 +71,70 @@ ext.lib = [
         spirng_boot_security               : "org.springframework.boot:spring-boot-starter-security:$spring_boot",
         spring_boot_jdbc                   : "org.springframework.boot:spring-boot-starter-jdbc:$spring_boot",
         spring_boot_jta_atomikos           : "org.springframework.boot:spring-boot-starter-jta-atomikos:$spring_boot",
+        spring_boot_activemq               : "org.springframework.boot:spring-boot-starter-activemq:$spring_boot",
+        spring_boot_amqp                   : "org.springframework.boot:spring-boot-starter-amqp:$spring_boot",
         spring_boot_configuration_processor: "org.springframework.boot:spring-boot-configuration-processor:$spring_boot",
         spring_boot_hateoas                : "org.springframework.boot:spring-boot-starter-hateoas:$spring_boot",
+        spring_boot_integration            : "org.springframework.boot:spring-boot-starter-integration:${spring_boot}",
+        spring_boot_devtools               : "org.springframework.boot:spring-boot-devtools:${spring_boot}",
+        reactor_net                        : "io.projectreactor:reactor-net:2.0.8.RELEASE",
+        groovy_all                         : "org.codehaus.groovy:groovy-all:${groovy}",
         jpa                                : "org.hibernate:hibernate-entitymanager:$jpa",
         hibernate_core                     : "org.hibernate:hibernate-core:$hibernate",
         h2database                         : "com.h2database:h2:1.4.186",
         mysql                              : "mysql:mysql-connector-java:5.1.35",
-        mybatis                            : "org.mybatis:mybatis:3.3.0",
-        mybatis_spring                     : "org.mybatis:mybatis-spring:1.2.3",
-        pagehelper                         : "com.github.pagehelper:pagehelper:4.0.1",
-        postgresql          : "org.postgresql:postgresql:$postgresql",
-        oracle              : "com.oracle:ojdbc6:v1.0",
-        commons_compress    : "org.apache.commons:commons-compress:1.9",
-        commons_pool        : "commons-pool:commons-pool:1.6",
-        commons_collections4: "org.apache.commons:commons-collections4:4.0",
-        commons_lang3       : "org.apache.commons:commons-lang3:3.4",
-        commons_codec       : "commons-codec:commons-codec:1.10",
-        commons_email       : "org.apache.commons:commons-email:1.4",
-        commons_io          : 'commons-io:commons-io:2.4',
-        commons_beanutils   : 'commons-beanutils:commons-beanutils:1.9.2',
-        commons_net         : "commons-net:commons-net:3.4",
-        mesos               : "org.apache.mesos:mesos:0.28.1",
-        poi                 : 'org.apache.poi:poi:3.13',
-        shiro_all           : "org.apache.shiro:shiro-all:1.2.3",
-        activemq_all        : "org.apache.activemq:activemq-all:${activemq}",
-        activemq_broker     : "org.apache.activemq:activemq-broker:${activemq}",
-        activemq_pool       : "org.apache.activemq:activemq-pool:${activemq}",
-        httpclient          : "org.apache.httpcomponents:httpclient:4.4.1",
-        netty_all           : "io.netty:netty-all:4.1.2.Final",
-        zookeeper           : "org.apache.zookeeper:zookeeper:3.4.8",
-        protostuff          : [
-                "com.dyuproject.protostuff:protostuff-core:1.0.9",
-                "com.dyuproject.protostuff:protostuff-runtime:1.0.9"
+        mybatis                            : "org.mybatis:mybatis:3.4.3",
+        mybatis_spring                     : "org.mybatis:mybatis-spring:1.3.1",
+        mybatis_spring_boot                : "org.mybatis.spring.boot:mybatis-spring-boot-starter:1.2.0",
+        mybatis_pagehelper                 : "com.github.pagehelper:pagehelper:4.0.1",
+        postgresql                         : "org.postgresql:postgresql:$postgresql",
+        oracle                             : "com.oracle:ojdbc6:v1.0",
+        commons_compress                   : "org.apache.commons:commons-compress:1.13",
+        commons_pool                       : "commons-pool:commons-pool:1.6",
+        commons_collections4               : "org.apache.commons:commons-collections4:4.1",
+        commons_lang3                      : "org.apache.commons:commons-lang3:3.5",
+        commons_codec                      : "commons-codec:commons-codec:1.10",
+        commons_email                      : "org.apache.commons:commons-email:1.4",
+        commons_io                         : 'commons-io:commons-io:2.5',
+        commons_beanutils                  : 'commons-beanutils:commons-beanutils:1.9.3',
+        commons_net                        : "commons-net:commons-net:3.5",
+        mesos                              : "org.apache.mesos:mesos:1.1.1",
+        poi                                : "org.apache.poi:poi:${apache_poi}",
+        poi_ooxml                          : "org.apache.poi:poi-ooxml:${apache_poi}",
+        shiro_all                          : "org.apache.shiro:shiro-all:1.2.3",
+        activemq_all                       : "org.apache.activemq:activemq-all:${activemq}",
+        activemq_broker                    : "org.apache.activemq:activemq-broker:${activemq}",
+        activemq_pool                      : "org.apache.activemq:activemq-pool:${activemq}",
+        httpclient                         : "org.apache.httpcomponents:httpclient:4.4.1",
+        netty_all                          : "io.netty:netty-all:4.1.9.Final",
+        zookeeper                          : "org.apache.zookeeper:zookeeper:3.4.9",
+        protostuff                         : [
+                "com.dyuproject.protostuff:protostuff-core:1.0.12",
+                "com.dyuproject.protostuff:protostuff-runtime:1.0.12"
         ],
-        objenesis     : "org.objenesis:objenesis:2.1",
-        cglib         : "cglib:cglib:3.1",
-        kaptcha       : "com.github.axet:kaptcha:0.0.9",
-        xmemcached    : "com.googlecode.xmemcached:xmemcached:2.0.0",
-        UserAgentUtils: "eu.bitwalker:UserAgentUtils:1.16",
-        jpos          : "org.jpos:jpos:2.0.4",
-        freemarker    : "org.freemarker:freemarker:2.3.23",
-        okhttp3       : "com.squareup.okhttp3:okhttp:3.3.1",
-        jsoup         : 'org.jsoup:jsoup:1.9.1',
-        sitb_dswrs    : "software.sitb:dswrs:1.0.11.RELEASE",
-        sitb_utils    : "software.sitb:utils:1.0.5.RELEASE"
+        objenesis                          : "org.objenesis:objenesis:2.5.1",
+        cglib                              : "cglib:cglib:3.2.4",
+        kaptcha                            : "com.github.axet:kaptcha:0.0.9",
+        xmemcached                         : "com.googlecode.xmemcached:xmemcached:2.2.0",
+        UserAgentUtils                     : "eu.bitwalker:UserAgentUtils:1.20",
+        jpos                               : "org.jpos:jpos:2.0.6",
+        freemarker                         : "org.freemarker:freemarker:2.3.23",
+        okhttp3                            : "com.squareup.okhttp3:okhttp:${okhttp3}",
+        retrofit                           : "com.squareup.retrofit2:retrofit:${retrofit}",
+        retrofit_jackson                   : "com.squareup.retrofit2:converter-jackson:${retrofit}",
+        jsoup                              : 'org.jsoup:jsoup:1.10.2',
+        itextpdf                           : "com.itextpdf:itextpdf:${itextpdf}",
+        itextpdf_tool_xmlworker            : "com.itextpdf.tool:xmlworker:${itextpdf}",
+        pdfbox                             : "org.apache.pdfbox:pdfbox:2.0.2",
+        rxjava                             : "io.reactivex:rxjava:1.2.2",
+        zxing                              : "com.google.zxing:core:3.3.0",
+        lombok                             : "org.projectlombok:lombok:1.16.16",
+        hibernate_jpamodelgen              : "org.hibernate:hibernate-jpamodelgen:${hibernate}",
+        ews_java_api                       : "com.microsoft.ews-java-api:ews-java-api:2.0",
+        jpush_client                       : "cn.jpush.api:jpush-client:3.3.0",
+        sitb_dswrs                         : "software.sitb:dswrs:1.0.15.RELEASE",
+        sitb_utils                         : "software.sitb:utils:1.0.11.RELEASE",
+        sitb_spring_data_jpa               : "software.sitb.spring.data:jpa:1.0.1.RELEASE",
+        sitb_spring_data_mybatis_page      : "software.sitb.spring.data:mybatis-page:1.0.2.RELEASE",
+        sitb_spring_cache                  : "software.sitb.spring:cache:1.0.0.RELEASE"
 ]
