@@ -115,7 +115,7 @@ ext.lib = [
         objenesis                          : "org.objenesis:objenesis:2.5.1",
         cglib                              : "cglib:cglib:3.2.4",
         kaptcha                            : "com.github.axet:kaptcha:0.0.9",
-        xmemcached                         : "com.googlecode.xmemcached:xmemcached:2.2.0",
+        xmemcached                         : "com.googlecode.xmemcached:xmemcached:2.3.2",
         UserAgentUtils                     : "eu.bitwalker:UserAgentUtils:1.20",
         jpos                               : "org.jpos:jpos:2.0.6",
         freemarker                         : "org.freemarker:freemarker:2.3.23",

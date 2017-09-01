@@ -1,23 +1,26 @@
+apply from: 'libraries.gradle'
+
 allprojects {
     group 'software.sitb.spring'
-    version '1.0.0.RELEASE'
+    version '1.0.1.RELEASE'
 
     repositories {
-        maven { url "http://repo.sitb.software/content/groups/public" }
+        maven { url "https://repo.sitb.software/repository/maven-public/" }
     }
 
 }
-apply from: 'libraries.gradle'
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.13'
+    gradleVersion = '4.0.2'
     distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
 }
 
 
 buildscript {
     repositories {
-        maven { url "http://repo.sitb.software/content/groups/public" }
+        maven { url "https://repo.sitb.software/repository/maven-public/" }
+        maven { url 'http://repo.spring.io/plugins-release' }
+        jcenter()
     }
     dependencies {
         classpath 'com.novoda:bintray-release:0.3.5'
