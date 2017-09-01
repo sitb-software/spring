@@ -86,9 +86,6 @@ public class MemcachedCacheManager implements CacheManager {
      * @return Cache
      */
     private Cache createCache(String name) {
-        MemcachedCache cache = new MemcachedCache();
-        cache.setName(name);
-        cache.setClient(this.memcachedBuilder.builder());
-        return cache;
+        return new MemcachedCache(this.memcachedBuilder.builder(), name);
     }
 }

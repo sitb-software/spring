@@ -8,7 +8,11 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
@@ -18,30 +22,33 @@ import java.util.concurrent.TimeoutException;
  * @author 田尘殇Sean sean.snow@live.com
  */
 public class MemcachedCache implements Cache {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MemcachedCache.class);
 
     private static final int TIMEOUT = 86400;
 
+    private static final String PREFIX = "@@keys@@";
+
+    private static final String SPLIT = "@_______________@";
+
     private MemcachedClient client;
-
-    private String name;
-
-    public MemcachedCache() {
-    }
 
     /**
      * 创建一个Memcached存储工具
      *
      * @param client CacheDefault 客户端
      */
-    public MemcachedCache(MemcachedClient client) {
-        this.client = client;
-    }
-
     public MemcachedCache(MemcachedClient client, String name) {
         Assert.notNull(name, "Name must not be null");
-        this.name = name;
         this.client = client;
+        client.setName(name);
+        try {
+            if(null == client.get(PREFIX + name)){
+                client.set(PREFIX+ name,Integer.MAX_VALUE,"");
+            }
+        } catch (TimeoutException | InterruptedException | MemcachedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -49,16 +56,7 @@ public class MemcachedCache implements Cache {
      */
     @Override
     public String getName() {
-        return this.name;
-    }
-
-    /**
-     * Set the cache name
-     *
-     * @param name the cache name
-     */
-    public void setName(String name) {
-        this.name = name;
+        return client.getName();
     }
 
     /**
@@ -198,7 +196,14 @@ public class MemcachedCache implements Cache {
     @Override
     public void clear() {
         try {
-            getClient().flushAll();
+            String keyStr = getClient().get(PREFIX + this.getName());
+            if(null == keyStr){
+                return;
+            }
+            String[] keys = keyStr.split(SPLIT);
+            for (String key : keys){
+                getClient().delete(key);
+            }
         } catch (TimeoutException | InterruptedException | MemcachedException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -218,7 +223,6 @@ public class MemcachedCache implements Cache {
         this.client = client;
     }
 
-
     /**
      * 把对象转换为String类型的key，
      * 通过计算对象的MD5
@@ -226,9 +230,11 @@ public class MemcachedCache implements Cache {
      * @param obj key
      * @return MD5 String
      */
-    private String getKey(Object obj) {
+    private String getKey(Object obj) throws InterruptedException, MemcachedException, TimeoutException {
         if (null == obj)
             return null;
-        return this.getName() + "_" + obj.toString();
+        String key = this.getName() + "_" + obj.toString();
+        getClient().append(PREFIX + this.getName(), key+SPLIT);
+        return key;
     }
 }

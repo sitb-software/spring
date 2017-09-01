@@ -23,6 +23,8 @@ public class MemcachedBuilder {
 
     private MemcachedConfig config;
 
+    private List<InetSocketAddress> addresses;
+
     public MemcachedBuilder(MemcachedConfig config) {
         this.config = config;
         init();
@@ -36,7 +38,7 @@ public class MemcachedBuilder {
         if (builder != null)
             return;
 
-        List<InetSocketAddress> addresses = AddrUtil.getAddresses(config.getConnectString());
+        addresses = AddrUtil.getAddresses(config.getConnectString());
         int[] weights = new int[addresses.size()];
         for (int i = 0; i < weights.length; i++) {
             weights[i] = config.getWeights();
@@ -84,5 +86,9 @@ public class MemcachedBuilder {
 
     public void setConfig(MemcachedConfig config) {
         this.config = config;
+    }
+
+    public List<InetSocketAddress> getAddresses() {
+        return addresses;
     }
 }
