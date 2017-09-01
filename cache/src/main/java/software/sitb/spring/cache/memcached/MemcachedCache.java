@@ -9,6 +9,7 @@ import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
 
 import java.util.Collection;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -100,9 +101,8 @@ public class MemcachedCache implements Cache {
      * @since 4.0
      */
     @Override
-    @SuppressWarnings("unchecked")
     public <T> T get(Object key, Class<T> type) {
-        Object value = null;
+        T value = null;
         try {
             value = getClient().get(getKey(key));
         } catch (TimeoutException | InterruptedException | MemcachedException e) {
@@ -111,7 +111,21 @@ public class MemcachedCache implements Cache {
         if (value != null && type != null && !type.isInstance(value)) {
             throw new IllegalStateException("Cached value is not of required type [" + type.getName() + "]: " + value);
         }
-        return (T) value;
+        return value;
+    }
+
+    @Override
+    public <T> T get(Object key, Callable<T> valueLoader) {
+        try {
+            T value = client.get(getKey(key));
+            if(null == value){
+                value = valueLoader.call();
+                put(key, value);
+            }
+            return value;
+        } catch (Throwable e) {
+            throw new ValueRetrievalException(key,valueLoader,e);
+        }
     }
 
     /**
