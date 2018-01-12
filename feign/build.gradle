@@ -1,0 +1,7 @@
+description = 'spring-feign'
+
+dependencies {
+    provided lib.spring_data_commons
+    provided lib.spring_boot_web
+    provided lib.spring_cloud_openfeign
+}

@@ -1,20 +1,19 @@
 ext.repoUrl = "https://repo.sitb.software/repository/maven-public/"
-ext.spring_boot = "1.5.2.RELEASE"
+ext.spring_boot = "1.5.9.RELEASE"
 ext.spring_security = "4.2.2.RELEASE"
-ext.spring_data_commons = "1.13.1.RELEASE"
-ext.spring_data_jpa = "1.11.1.RELEASE"
-ext.spring = "4.3.7.RELEASE"
-ext.springloaded = "1.2.7.RELEASE"
-ext.hibernate = "5.2.9.Final"
-ext.jpa = "5.2.9.Final"
+ext.spring_data = "2.0.2.RELEASE"
+ext.spring_cloud = "1.4.0.RELEASE"
+ext.spring = "5.0.2.RELEASE"
+ext.hibernate = "5.2.12.Final"
+ext.jpa = "5.2.12.Final"
 ext.postgresql = "9.4.1212.jre7"
-ext.jackson = "2.8.8"
-ext.activemq = "5.14.4"
-ext.apache_poi = "3.15"
-ext.okhttp3 = "3.8.0"
-ext.retrofit = "2.1.0"
-ext.itextpdf = "5.5.10"
-ext.groovy = "2.4.12"
+ext.jackson = "2.8.10"
+ext.activemq = "5.15.2"
+ext.apache_poi = "3.17"
+ext.okhttp3 = "3.9.1"
+ext.retrofit = "2.3.0"
+ext.itextpdf = "5.5.12"
+ext.groovy = "2.4.13"
 ext.lib = [
         _test                              : [
                 "org.springframework.boot:spring-boot-starter-test:$spring_boot"
@@ -47,8 +46,9 @@ ext.lib = [
         spring_beans                       : "org.springframework:spring-beans:$spring",
         spring_context                     : "org.springframework:spring-context:$spring",
         spring_orm                         : "org.springframework:spring-orm:$spring",
-        spring_data_commons                : "org.springframework.data:spring-data-commons:${spring_data_commons}",
-        spring_data_jpa                    : "org.springframework.data:spring-data-jpa:${spring_data_jpa}",
+        spring_data_commons                : "org.springframework.data:spring-data-commons:$spring_data",
+        spring_data_jpa                    : "org.springframework.data:spring-data-jpa:$spring_data",
+        spring_data_mongodb                : "org.springframework.data:spring-data-mongodb:$spring_data",
         spring_jms                         : "org.springframework:spring-jms:$spring",
         spring_ws_core                     : "org.springframework.ws:spring-ws-core:2.2.4.RELEASE",
         spring_messaging                   : "org.springframework:spring-messaging:4.3.7.RELEASE",
@@ -56,7 +56,12 @@ ext.lib = [
         spring_security_config             : "org.springframework.security:spring-security-config:$spring_security",
         spring_security_web                : "org.springframework.security:spring-security-web:$spring_security",
         spring_security_oauth2             : "org.springframework.security.oauth:spring-security-oauth2:2.0.8.RELEASE",
-        spring_integration_mail            : "org.springframework.integration:spring-integration-mail:$spring",
+        spring_integration_mail            : "org.springframework.integration:spring-integration-mail:4.3.12.RELEASE",
+        spring_cloud_config                : "org.springframework.cloud:spring-cloud-starter-config:$spring_cloud",
+        spring_cloud_config_server         : "org.springframework.cloud:spring-cloud-config-server:$spring_cloud",
+        spring_cloud_eureka                : "org.springframework.cloud:spring-cloud-starter-eureka:$spring_cloud",
+        spring_cloud_eureka_server         : "org.springframework.cloud:spring-cloud-starter-eureka-server:$spring_cloud",
+        spring_cloud_openfeign             : "org.springframework.cloud:spring-cloud-starter-openfeign:$spring_cloud",
         spring_boot                        : "org.springframework.boot:spring-boot-starter:$spring_boot",
         spring_boot_actuator               : "org.springframework.boot:spring-boot-starter-actuator:$spring_boot",
         spring_boot_remote_shell           : "org.springframework.boot:spring-boot-starter-remote-shell:$spring_boot",
@@ -100,6 +105,7 @@ ext.lib = [
         commons_io                         : 'commons-io:commons-io:2.5',
         commons_beanutils                  : 'commons-beanutils:commons-beanutils:1.9.3',
         commons_net                        : "commons-net:commons-net:3.5",
+        commons_math                       : "org.apache.commons:commons-math3:3.6.1",
         mesos                              : "org.apache.mesos:mesos:1.1.1",
         poi                                : "org.apache.poi:poi:${apache_poi}",
         poi_ooxml                          : "org.apache.poi:poi-ooxml:${apache_poi}",
@@ -108,7 +114,7 @@ ext.lib = [
         activemq_broker                    : "org.apache.activemq:activemq-broker:${activemq}",
         activemq_pool                      : "org.apache.activemq:activemq-pool:${activemq}",
         httpclient                         : "org.apache.httpcomponents:httpclient:4.4.1",
-        netty_all                          : "io.netty:netty-all:4.1.9.Final",
+        netty_all                          : "io.netty:netty-all:4.1.19.Final",
         zookeeper                          : "org.apache.zookeeper:zookeeper:3.4.9",
         protostuff                         : [
                 "com.dyuproject.protostuff:protostuff-core:1.0.12",
@@ -135,8 +141,9 @@ ext.lib = [
         ews_java_api                       : "com.microsoft.ews-java-api:ews-java-api:2.0",
         jpush_client                       : "cn.jpush.api:jpush-client:3.3.0",
         sitb_dswrs                         : "software.sitb:dswrs:1.0.15.RELEASE",
-        sitb_utils                         : "software.sitb:utils:1.0.11.RELEASE",
-        sitb_spring_data_jpa               : "software.sitb.spring.data:jpa:1.0.7.RELEASE",
+        sitb_utils                         : "software.sitb:utils:1.0.12.RELEASE",
+        sitb_spring_data_jpa               : "software.sitb.spring.data:jpa:1.0.8.RELEASE",
+        sitb_spring_data_mongo             : "software.sitb.spring.data:mongo:1.0.0.RELEASE",
         sitb_spring_data_mybatis_page      : "software.sitb.spring.data:mybatis-page:1.0.2.RELEASE",
         sitb_spring_cache                  : "software.sitb.spring:cache:1.0.1.RELEASE"
 ]
