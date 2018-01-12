@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author Sean(sean.snow @ live.com) createAt 18-1-11.
  */
-public class AppFeignBuilder {
+public class AppFeignBuilder extends Feign.Builder {
 
     private final List<RequestInterceptor> requestInterceptors = new ArrayList<RequestInterceptor>();
     private Logger.Level logLevel = Logger.Level.NONE;
@@ -68,21 +68,6 @@ public class AppFeignBuilder {
         return this;
     }
 
-    /**
-     * This flag indicates that the {@link #decoder(Decoder) decoder} should process responses with
-     * 404 status, specifically returning null or empty instead of throwing {@link FeignException}.
-     * <p>
-     * <p/> All first-party (ex gson) decoders return well-known empty values defined by {@link
-     * Util#emptyValueOf}. To customize further, wrap an existing {@link #decoder(Decoder) decoder}
-     * or make your own.
-     * <p>
-     * <p/> This flag only works with 404, as opposed to all or arbitrary status codes. This was an
-     * explicit decision: 404 -> empty is safe, common and doesn't complicate redirection, retry or
-     * fallback policy. If your server returns a different status for not-found, correct via a
-     * custom {@link #client(Client) client}.
-     *
-     * @since 8.12
-     */
     public AppFeignBuilder decode404() {
         this.decode404 = true;
         return this;
