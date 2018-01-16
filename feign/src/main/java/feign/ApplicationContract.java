@@ -390,18 +390,4 @@ public class ApplicationContract extends Contract.BaseContract implements Resour
         }
     }
 
-    public static class ConvertingExpander implements Param.Expander {
-
-        private final ConversionService conversionService;
-
-        public ConvertingExpander(ConversionService conversionService) {
-            this.conversionService = conversionService;
-        }
-
-        @Override
-        public String expand(Object value) {
-            return this.conversionService.convert(value, String.class);
-        }
-
-    }
 }
