@@ -139,15 +139,10 @@ public class ApplicationContract extends Contract.BaseContract implements Resour
             }
         }
 
-        if (body.size() > 1) {
+        if (body.size() > 0) {
             List<String> bodyMeta = new ArrayList<>();
             body.forEach((index, type) -> bodyMeta.add(index + ""));
             data.template().header(AppReflectiveFeign.BODY_META, bodyMeta);
-        } else if (body.size() == 1) {
-            body.forEach((k, v) -> {
-                data.bodyIndex(k);
-                data.bodyType(v);
-            });
         }
 
         if (data.headerMapIndex() != null) {
