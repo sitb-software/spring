@@ -15,6 +15,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -35,12 +36,7 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return isSupport();
-    }
-
-    @Override
-    public boolean supportsReturnType(MethodParameter returnType) {
-        return isSupport();
+        return isSupport(parameter);
     }
 
     @Override
@@ -79,9 +75,16 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
         return mapper.convertValue(arg, parameter.getParameterType());
     }
 
-    private boolean isSupport() {
+    private boolean isSupport(MethodParameter parameter) {
         String[] values = request.getHeaderValues(AppReflectiveFeign.BODY_META);
-        return null != values && values.length > 0;
+        if (null == values || values.length == 0) {
+            return false;
+        }
+        return Arrays.stream(values)
+                .mapToInt(Integer::parseInt)
+                .filter(item -> item == parameter.getParameterIndex())
+                .findFirst()
+                .isPresent();
     }
 
 }
