@@ -40,7 +40,7 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
 
     @Override
     public boolean supportsReturnType(MethodParameter returnType) {
-        return isSupport() || super.supportsReturnType(returnType);
+        return isSupport();
     }
 
     @Override
