@@ -25,10 +25,11 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
 
     private static MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
 
+    private static final String BODY_KEY = "@@FEIGN_REQUEST_BODY@@";
+
     @Autowired
     private NativeWebRequest request;
 
-    private volatile FeignRequestBody body;
 
     public FeignRequestBodyArgumentResolver() {
         super(Collections.singletonList(mappingJackson2HttpMessageConverter));
@@ -65,9 +66,14 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
     }
 
     private Object getParameter(MethodParameter parameter, NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotSupportedException {
-        if (null == body) {
+        Object bodyArg = webRequest.getAttribute(BODY_KEY, NativeWebRequest.SCOPE_REQUEST);
+        FeignRequestBody body;
+        if (null == bodyArg) {
             parameter = parameter.nestedIfOptional();
             body = (FeignRequestBody) readWithMessageConverters(webRequest, parameter, FeignRequestBody.class);
+            webRequest.setAttribute(BODY_KEY, body, NativeWebRequest.SCOPE_REQUEST);
+        } else {
+            body = (FeignRequestBody) bodyArg;
         }
 
         Object arg = body.get(parameter.getParameterIndex());
