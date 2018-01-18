@@ -305,8 +305,8 @@ public class AppReflectiveFeign extends Feign {
             Collection<String> bodyMeta = mutable.headers().get(BODY_META);
             if (null != bodyMeta && bodyMeta.size() > 0) {
                 FeignRequestBody requestBody = new FeignRequestBody();
-
                 List<String> newBodyMeta = new ArrayList<>();
+
                 bodyMeta.forEach(i -> {
                     Integer index = Integer.parseInt(i);
                     Object arg = argv[index];
@@ -317,8 +317,13 @@ public class AppReflectiveFeign extends Feign {
                         newBodyMeta.add(i);
                     }
                 });
-                mutable.header(BODY_META, newBodyMeta);
-                body = requestBody;
+                if (requestBody.size() == 1 && requestBody.values().toArray()[0] instanceof Pageable) {
+                    mutable.header(BODY_META);
+                    body = requestBody.values().toArray()[0];
+                } else {
+                    mutable.header(BODY_META, newBodyMeta);
+                    body = requestBody;
+                }
             }
 
             checkArgument(body != null, "Body parameter %s was null", metadata.bodyIndex());
