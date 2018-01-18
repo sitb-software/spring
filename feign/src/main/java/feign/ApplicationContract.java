@@ -132,9 +132,6 @@ public class ApplicationContract extends Contract.BaseContract implements Resour
 
 //                data.bodyIndex(i);
 //                data.bodyType(Types.resolve(targetType, targetType, method.getGenericParameterTypes()[i]));
-                if (method.getGenericParameterTypes()[i].getTypeName().equals("org.springframework.data.domain.Pageable")) {
-                    continue;
-                }
                 body.put(i, Types.resolve(targetType, targetType, method.getGenericParameterTypes()[i]));
             }
         }

@@ -22,6 +22,7 @@ import feign.codec.Decoder;
 import feign.codec.EncodeException;
 import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
+import org.springframework.data.domain.Pageable;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -304,10 +305,19 @@ public class AppReflectiveFeign extends Feign {
             Collection<String> bodyMeta = mutable.headers().get(BODY_META);
             if (null != bodyMeta && bodyMeta.size() > 0) {
                 FeignRequestBody requestBody = new FeignRequestBody();
+
+                List<String> newBodyMeta = new ArrayList<>();
                 bodyMeta.forEach(i -> {
                     Integer index = Integer.parseInt(i);
-                    requestBody.put(index, argv[index]);
+                    Object arg = argv[index];
+                    if (arg instanceof Pageable) {
+                        requestBody.put(-index, arg);
+                    } else {
+                        requestBody.put(index, arg);
+                        newBodyMeta.add(i);
+                    }
                 });
+                mutable.header(BODY_META, newBodyMeta);
                 body = requestBody;
             }
 

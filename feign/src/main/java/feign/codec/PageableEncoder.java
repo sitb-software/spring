@@ -1,5 +1,6 @@
 package feign.codec;
 
+import feign.FeignRequestBody;
 import feign.RequestTemplate;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -25,20 +26,33 @@ public class PageableEncoder implements Encoder {
     public void encode(Object object, Type bodyType, RequestTemplate template) throws EncodeException {
 
         if (object instanceof Pageable) {
-            Pageable pageable = (Pageable) object;
-            template.query("page", pageable.getPageNumber() + "");
-            template.query("size", pageable.getPageSize() + "");
-
-            if (null != pageable.getSort()) {
-                Collection<String> existingSorts = template.queries().get("sort");
-                List<String> sortQueries = existingSorts != null ? new ArrayList<>(existingSorts) : new ArrayList<>();
-                for (Sort.Order order : pageable.getSort()) {
-                    sortQueries.add(order.getProperty() + "," + order.getDirection());
+            encodePageable(template, (Pageable) object);
+        } else if (object instanceof FeignRequestBody) {
+            FeignRequestBody body = (FeignRequestBody) object;
+            for (Integer key : body.keySet()) {
+                if (body.get(key) instanceof Pageable) {
+                    encodePageable(template, (Pageable) body.get(key));
+                    body.remove(key);
+                    break;
                 }
-                template.query("sort", sortQueries);
             }
+            delegate.encode(object, bodyType, template);
         } else {
             delegate.encode(object, bodyType, template);
+        }
+    }
+
+    private void encodePageable(RequestTemplate template, Pageable pageable) {
+        template.query("page", pageable.getPageNumber() + "");
+        template.query("size", pageable.getPageSize() + "");
+
+        if (null != pageable.getSort()) {
+            Collection<String> existingSorts = template.queries().get("sort");
+            List<String> sortQueries = existingSorts != null ? new ArrayList<>(existingSorts) : new ArrayList<>();
+            for (Sort.Order order : pageable.getSort()) {
+                sortQueries.add(order.getProperty() + "," + order.getDirection());
+            }
+            template.query("sort", sortQueries);
         }
     }
 }
