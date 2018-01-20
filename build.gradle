@@ -2,7 +2,7 @@ apply from: 'libraries.gradle'
 
 allprojects {
     group 'software.sitb.spring'
-    version '1.0.8.RELEASE'
+    version '1.0.9.RELEASE'
 
     repositories {
         maven { url "https://repo.sitb.software/repository/maven-public/" }
