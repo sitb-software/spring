@@ -14,6 +14,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
+import javax.servlet.ServletRequest;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,6 +83,9 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
     }
 
     private boolean isSupport(MethodParameter parameter) {
+        if (ServletRequest.class.isAssignableFrom(parameter.getParameterType())) {
+            return false;
+        }
         String[] values = request.getHeaderValues(AppReflectiveFeign.BODY_META);
         if (null == values || values.length == 0) {
             return false;
