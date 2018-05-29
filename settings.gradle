@@ -2,3 +2,4 @@ rootProject.name = 'spring'
 
 include 'cache'
 include 'feign'
+include 'feign-exception'
