@@ -1,9 +1,9 @@
 ext.repoUrl = "https://repo.sitb.software/repository/maven-public/"
-ext.spring_boot = "1.5.9.RELEASE"
+ext.spring_boot = "1.5.12.RELEASE"
 ext.spring_security = "4.2.2.RELEASE"
-ext.spring_data = "2.0.2.RELEASE"
-ext.spring_cloud = "1.4.0.RELEASE"
-ext.spring = "5.0.2.RELEASE"
+ext.spring_data = "2.0.5.RELEASE"
+ext.spring_cloud = "1.4.3.RELEASE"
+ext.spring = "5.0.4.RELEASE"
 ext.hibernate = "5.2.12.Final"
 ext.jpa = "5.2.12.Final"
 ext.postgresql = "9.4.1212.jre7"
@@ -13,7 +13,7 @@ ext.apache_poi = "3.17"
 ext.okhttp3 = "3.9.1"
 ext.retrofit = "2.3.0"
 ext.itextpdf = "5.5.12"
-ext.groovy = "2.4.13"
+ext.groovy = "2.4.14"
 ext.lib = [
         _test                              : [
                 "org.springframework.boot:spring-boot-starter-test:$spring_boot"
@@ -45,6 +45,7 @@ ext.lib = [
         spring_core                        : "org.springframework:spring-core:$spring",
         spring_beans                       : "org.springframework:spring-beans:$spring",
         spring_context                     : "org.springframework:spring-context:$spring",
+        spring_webmvc                     : "org.springframework:spring-webmvc:$spring",
         spring_orm                         : "org.springframework:spring-orm:$spring",
         spring_data_commons                : "org.springframework.data:spring-data-commons:$spring_data",
         spring_data_jpa                    : "org.springframework.data:spring-data-jpa:$spring_data",
@@ -61,7 +62,10 @@ ext.lib = [
         spring_cloud_config_server         : "org.springframework.cloud:spring-cloud-config-server:$spring_cloud",
         spring_cloud_eureka                : "org.springframework.cloud:spring-cloud-starter-eureka:$spring_cloud",
         spring_cloud_eureka_server         : "org.springframework.cloud:spring-cloud-starter-eureka-server:$spring_cloud",
+        spring_cloud_oauth                 : "org.springframework.cloud:spring-cloud-starter-oauth2:1.2.2.RELEASE",
+        spring_cloud_security              : "org.springframework.cloud:spring-cloud-starter-security:1.2.2.RELEASE",
         spring_cloud_openfeign             : "org.springframework.cloud:spring-cloud-starter-openfeign:$spring_cloud",
+        spring_cloud_gateway               : "org.springframework.cloud:spring-cloud-starter-gateway:1.0.1.RELEASE",
         spring_boot                        : "org.springframework.boot:spring-boot-starter:$spring_boot",
         spring_boot_actuator               : "org.springframework.boot:spring-boot-starter-actuator:$spring_boot",
         spring_boot_remote_shell           : "org.springframework.boot:spring-boot-starter-remote-shell:$spring_boot",
@@ -76,6 +80,7 @@ ext.lib = [
         spring_boot_redis                  : "org.springframework.boot:spring-boot-starter-data-redis:$spring_boot",
         spring_boot_mongodb                : "org.springframework.boot:spring-boot-starter-data-mongodb:$spring_boot",
         spirng_boot_security               : "org.springframework.boot:spring-boot-starter-security:$spring_boot",
+        spring_boot_oauth                  : "org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:2.0.0.RELEASE",
         spring_boot_jdbc                   : "org.springframework.boot:spring-boot-starter-jdbc:$spring_boot",
         spring_boot_jta_atomikos           : "org.springframework.boot:spring-boot-starter-jta-atomikos:$spring_boot",
         spring_boot_activemq               : "org.springframework.boot:spring-boot-starter-activemq:$spring_boot",
@@ -84,6 +89,7 @@ ext.lib = [
         spring_boot_hateoas                : "org.springframework.boot:spring-boot-starter-hateoas:$spring_boot",
         spring_boot_integration            : "org.springframework.boot:spring-boot-starter-integration:${spring_boot}",
         spring_boot_devtools               : "org.springframework.boot:spring-boot-devtools:${spring_boot}",
+        spring_boot_undertow               : "org.springframework.boot:spring-boot-starter-undertow:${spring_boot}",
         reactor_net                        : "io.projectreactor:reactor-net:2.0.8.RELEASE",
         groovy_all                         : "org.codehaus.groovy:groovy-all:${groovy}",
         jpa                                : "org.hibernate:hibernate-entitymanager:$jpa",
@@ -133,17 +139,20 @@ ext.lib = [
         jsoup                              : 'org.jsoup:jsoup:1.10.2',
         itextpdf                           : "com.itextpdf:itextpdf:${itextpdf}",
         itextpdf_tool_xmlworker            : "com.itextpdf.tool:xmlworker:${itextpdf}",
+        nekohtml                           : "net.sourceforge.nekohtml:nekohtml:1.9.22",
         pdfbox                             : "org.apache.pdfbox:pdfbox:2.0.2",
         rxjava                             : "io.reactivex:rxjava:1.2.2",
         zxing                              : "com.google.zxing:core:3.3.0",
         lombok                             : "org.projectlombok:lombok:1.16.16",
         hibernate_jpamodelgen              : "org.hibernate:hibernate-jpamodelgen:${hibernate}",
+        feign_okhttp                       : "io.github.openfeign:feign-okhttp:9.5.1",
         ews_java_api                       : "com.microsoft.ews-java-api:ews-java-api:2.0",
         jpush_client                       : "cn.jpush.api:jpush-client:3.3.0",
         sitb_dswrs                         : "software.sitb:dswrs:1.0.15.RELEASE",
-        sitb_utils                         : "software.sitb:utils:1.0.12.RELEASE",
+        sitb_utils                         : "software.sitb:utils:1.0.13.RELEASE",
         sitb_spring_data_jpa               : "software.sitb.spring.data:jpa:1.0.8.RELEASE",
         sitb_spring_data_mongo             : "software.sitb.spring.data:mongo:1.0.0.RELEASE",
         sitb_spring_data_mybatis_page      : "software.sitb.spring.data:mybatis-page:1.0.2.RELEASE",
-        sitb_spring_cache                  : "software.sitb.spring:cache:1.0.1.RELEASE"
+        sitb_spring_cache                  : "software.sitb.spring:cache:1.0.1.RELEASE",
+        sitb_spring_feign                  : "software.sitb.spring:feign:1.0.9.RELEASE"
 ]
