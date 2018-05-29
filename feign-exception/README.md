@@ -1,0 +1,1 @@
+Spring Cloud openfeign http exception to native exception

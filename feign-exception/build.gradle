@@ -1,0 +1,9 @@
+description = 'spring-cloud-feign-exception'
+
+version '1.0.0.RELEASE'
+
+dependencies {
+    provided project(':feign')
+    provided lib.spring_cloud_openfeign
+    provided lib.spring_webmvc
+}
