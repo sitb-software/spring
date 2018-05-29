@@ -1,6 +1,7 @@
 package software.sitb.spring.feign.exception;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.AbstractHandlerExceptionResolver;
@@ -13,8 +14,9 @@ import java.io.ObjectOutputStream;
 /**
  * @author Sean(sean.snow @ live.com) createAt 17-12-29.
  */
-@Slf4j
 public class FeignWebExceptionHandler extends AbstractHandlerExceptionResolver {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FeignWebExceptionHandler.class);
 
     @Override
     protected ModelAndView doResolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
