@@ -2,13 +2,20 @@ package feign;
 
 import feign.codec.Decoder;
 import feign.codec.Encoder;
+import feign.codec.ErrorDecoder;
+import feign.codec.ExceptionErrorDecoder;
 import org.springframework.context.annotation.Bean;
 
-public class FeignConfiguration {
+public class FeignClientConfiguration {
 
     @Bean
     public Contract contract() {
         return new ContractImpl();
+    }
+
+    @Bean
+    public ErrorDecoder errorDecoder() {
+        return new ExceptionErrorDecoder();
     }
 
     @Bean
@@ -17,14 +24,17 @@ public class FeignConfiguration {
             Decoder decoder,
             Contract contract,
             Client client,
-            Retryer retryer
+            Retryer retryer,
+            ErrorDecoder errorDecoder
     ) {
         return new FeignBuilder()
                 .encoder(encoder)
                 .decoder(decoder)
                 .contract(contract)
                 .client(client)
-                .retryer(retryer);
+                .retryer(retryer)
+                .errorDecoder(errorDecoder)
+                ;
     }
 
 }

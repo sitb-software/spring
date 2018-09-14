@@ -1,3 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-feign.request.FeignRequestBodyArgumentResolverConfiguration,\
-feign.response.FeignWebMvcConfiguration
