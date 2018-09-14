@@ -1,7 +1,9 @@
-description = 'spring-feign'
+description = 'feign'
+
+version '1.0.10.RELEASE'
 
 dependencies {
-    provided lib.spring_data_commons
-    provided lib.spring_boot_web
-    provided lib.spring_cloud_openfeign
+    compileOnly lib.spring_data_commons
+    compileOnly lib.spring_boot_web
+    compileOnly lib.spring_cloud_openfeign
 }

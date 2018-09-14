@@ -1,6 +1,8 @@
-package feign;
+package feign.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignRequestBody;
+import feign.MultipleBodyReflectiveFeign;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Conventions;
 import org.springframework.core.MethodParameter;
@@ -43,7 +45,7 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
 
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-        String[] values = webRequest.getHeaderValues(AppReflectiveFeign.BODY_META);
+        String[] values = webRequest.getHeaderValues(MultipleBodyReflectiveFeign.BODY_META);
         for (String value : values) {
             Integer index = Integer.parseInt(value);
             if (index == parameter.getParameterIndex()) {
@@ -86,7 +88,7 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
         if (ServletRequest.class.isAssignableFrom(parameter.getParameterType())) {
             return false;
         }
-        String[] values = request.getHeaderValues(AppReflectiveFeign.BODY_META);
+        String[] values = request.getHeaderValues(MultipleBodyReflectiveFeign.BODY_META);
         if (null == values || values.length == 0) {
             return false;
         }

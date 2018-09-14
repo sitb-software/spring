@@ -1,18 +1,3 @@
-/*
- * Copyright 2013 Netflix, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package feign;
 
 import feign.InvocationHandlerFactory.MethodHandler;
@@ -22,7 +7,6 @@ import feign.codec.Decoder;
 import feign.codec.EncodeException;
 import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
-import org.springframework.data.domain.Pageable;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -32,14 +16,19 @@ import java.util.Map.Entry;
 
 import static feign.Util.*;
 
-public class AppReflectiveFeign extends Feign {
+/**
+ * 主要功能，记录多个body的位置信息
+ * see {@link ParseHandlersByName}
+ * see {@link BuildTemplateByResolvingArgs}
+ */
+public class MultipleBodyReflectiveFeign extends Feign {
 
     public static final String BODY_META = "bodyMeta";
 
     private final ParseHandlersByName targetToHandlersByName;
     private final InvocationHandlerFactory factory;
 
-    AppReflectiveFeign(ParseHandlersByName targetToHandlersByName, InvocationHandlerFactory factory) {
+    MultipleBodyReflectiveFeign(ParseHandlersByName targetToHandlersByName, InvocationHandlerFactory factory) {
         this.targetToHandlersByName = targetToHandlersByName;
         this.factory = factory;
     }
@@ -52,7 +41,7 @@ public class AppReflectiveFeign extends Feign {
     @Override
     public <T> T newInstance(Target<T> target) {
         Map<String, MethodHandler> nameToHandler = targetToHandlersByName.apply(target);
-        Map<Method, MethodHandler> methodToHandler = new LinkedHashMap<Method, MethodHandler>();
+        Map<Method, MethodHandler> methodToHandler = new LinkedHashMap<>();
         List<DefaultMethodHandler> defaultMethodHandlers = new LinkedList<DefaultMethodHandler>();
 
         for (Method method : target.type().getMethods()) {
@@ -132,9 +121,7 @@ public class AppReflectiveFeign extends Feign {
                 try {
                     indexToExpander
                             .put(indexToExpanderClass.getKey(), indexToExpanderClass.getValue().newInstance());
-                } catch (InstantiationException e) {
-                    throw new IllegalStateException(e);
-                } catch (IllegalAccessException e) {
+                } catch (InstantiationException | IllegalAccessException e) {
                     throw new IllegalStateException(e);
                 }
             }
@@ -184,8 +171,8 @@ public class AppReflectiveFeign extends Feign {
         }
 
         private List<String> expandIterable(Expander expander, Iterable value) {
-            List<String> values = new ArrayList<String>();
-            for (Object element : (Iterable) value) {
+            List<String> values = new ArrayList<>();
+            for (Object element : value) {
                 if (element != null) {
                     values.add(expander.expand(element));
                 }
@@ -199,13 +186,11 @@ public class AppReflectiveFeign extends Feign {
             for (Entry<Object, Object> currEntry : headerMap.entrySet()) {
                 checkState(currEntry.getKey().getClass() == String.class, "HeaderMap key must be a String: %s", currEntry.getKey());
 
-                Collection<String> values = new ArrayList<String>();
+                Collection<String> values = new ArrayList<>();
 
                 Object currValue = currEntry.getValue();
                 if (currValue instanceof Iterable<?>) {
-                    Iterator<?> iter = ((Iterable<?>) currValue).iterator();
-                    while (iter.hasNext()) {
-                        Object nextObject = iter.next();
+                    for (Object nextObject : ((Iterable<?>) currValue)) {
                         values.add(nextObject == null ? null : nextObject.toString());
                     }
                 } else {
@@ -310,20 +295,20 @@ public class AppReflectiveFeign extends Feign {
                 bodyMeta.forEach(i -> {
                     Integer index = Integer.parseInt(i);
                     Object arg = argv[index];
-                    if (arg instanceof Pageable) {
-                        requestBody.put(-index, arg);
-                    } else {
-                        requestBody.put(index, arg);
-                        newBodyMeta.add(i);
-                    }
+//                    if (arg instanceof Pageable) {
+//                        requestBody.put(-index, arg);
+//                    } else {
+                    requestBody.put(index, arg);
+                    newBodyMeta.add(i);
+//                    }
                 });
-                if (requestBody.size() == 1 && requestBody.values().toArray()[0] instanceof Pageable) {
-                    mutable.header(BODY_META);
-                    body = requestBody.values().toArray()[0];
-                } else {
-                    mutable.header(BODY_META, newBodyMeta);
-                    body = requestBody;
-                }
+//                if (requestBody.size() == 1 && requestBody.values().toArray()[0] instanceof Pageable) {
+//                    mutable.header(BODY_META);
+//                    body = requestBody.values().toArray()[0];
+//                } else {
+                mutable.header(BODY_META, newBodyMeta);
+                body = requestBody;
+//                }
             }
 
             checkArgument(body != null, "Body parameter %s was null", metadata.bodyIndex());

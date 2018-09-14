@@ -4,7 +4,6 @@ import feign.*;
 import feign.codec.Decoder;
 import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
-import feign.codec.PageableEncoder;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
@@ -50,7 +49,7 @@ public class ApplicationFeignClientsConfiguration {
      * 多个 RequestBody 支持
      */
     @Bean
-    public AppFeignBuilder feignBuilder(
+    public FeignBuilder feignBuilder(
             Encoder encoder,
             Decoder decoder,
             Contract contract,
@@ -58,7 +57,7 @@ public class ApplicationFeignClientsConfiguration {
             Retryer retryer,
             ErrorDecoder errorDecoder
     ) {
-        return new AppFeignBuilder()
+        return new FeignBuilder()
                 .encoder(encoder)
                 .decoder(decoder)
                 .contract(contract)

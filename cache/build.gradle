@@ -1,6 +1,6 @@
 description = 'spring-cache'
 
 dependencies {
-    provided lib.spring_context
-    provided lib.xmemcached
+    compileOnly lib.spring_context
+    compileOnly lib.xmemcached
 }

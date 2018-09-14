@@ -1,9 +1,10 @@
-package software.sitb.spring.feign.exception;
+package feign.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
@@ -14,6 +15,7 @@ import java.util.List;
 /**
  * @author Sean(sean.snow @ live.com) createAt 18-1-17.
  */
+@Configuration
 public class FeignRequestBodyArgumentResolverConfiguration implements CommandLineRunner {
 
     @Autowired

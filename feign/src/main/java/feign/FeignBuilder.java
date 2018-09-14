@@ -8,9 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 主要作用为设置自定义的 {@link MultipleBodyReflectiveFeign}
+ *
  * @author Sean(sean.snow @ live.com) createAt 18-1-11.
  */
-public class AppFeignBuilder extends Feign.Builder {
+public class FeignBuilder extends Feign.Builder {
 
     private final List<RequestInterceptor> requestInterceptors = new ArrayList<RequestInterceptor>();
     private Logger.Level logLevel = Logger.Level.NONE;
@@ -25,37 +27,37 @@ public class AppFeignBuilder extends Feign.Builder {
     private InvocationHandlerFactory invocationHandlerFactory = new InvocationHandlerFactory.Default();
     private boolean decode404;
 
-    public AppFeignBuilder logLevel(Logger.Level logLevel) {
+    public FeignBuilder logLevel(Logger.Level logLevel) {
         this.logLevel = logLevel;
         return this;
     }
 
-    public AppFeignBuilder contract(Contract contract) {
+    public FeignBuilder contract(Contract contract) {
         this.contract = contract;
         return this;
     }
 
-    public AppFeignBuilder client(Client client) {
+    public FeignBuilder client(Client client) {
         this.client = client;
         return this;
     }
 
-    public AppFeignBuilder retryer(Retryer retryer) {
+    public FeignBuilder retryer(Retryer retryer) {
         this.retryer = retryer;
         return this;
     }
 
-    public AppFeignBuilder logger(Logger logger) {
+    public FeignBuilder logger(Logger logger) {
         this.logger = logger;
         return this;
     }
 
-    public AppFeignBuilder encoder(Encoder encoder) {
+    public FeignBuilder encoder(Encoder encoder) {
         this.encoder = encoder;
         return this;
     }
 
-    public AppFeignBuilder decoder(Decoder decoder) {
+    public FeignBuilder decoder(Decoder decoder) {
         this.decoder = decoder;
         return this;
     }
@@ -63,22 +65,22 @@ public class AppFeignBuilder extends Feign.Builder {
     /**
      * Allows to map the response before passing it to the decoder.
      */
-    public AppFeignBuilder mapAndDecode(ResponseMapper mapper, Decoder decoder) {
+    public FeignBuilder mapAndDecode(ResponseMapper mapper, Decoder decoder) {
         this.decoder = new Feign.ResponseMappingDecoder(mapper, decoder);
         return this;
     }
 
-    public AppFeignBuilder decode404() {
+    public FeignBuilder decode404() {
         this.decode404 = true;
         return this;
     }
 
-    public AppFeignBuilder errorDecoder(ErrorDecoder errorDecoder) {
+    public FeignBuilder errorDecoder(ErrorDecoder errorDecoder) {
         this.errorDecoder = errorDecoder;
         return this;
     }
 
-    public AppFeignBuilder options(Request.Options options) {
+    public FeignBuilder options(Request.Options options) {
         this.options = options;
         return this;
     }
@@ -86,7 +88,7 @@ public class AppFeignBuilder extends Feign.Builder {
     /**
      * Adds a single request interceptor to the builder.
      */
-    public AppFeignBuilder requestInterceptor(RequestInterceptor requestInterceptor) {
+    public FeignBuilder requestInterceptor(RequestInterceptor requestInterceptor) {
         this.requestInterceptors.add(requestInterceptor);
         return this;
     }
@@ -95,7 +97,7 @@ public class AppFeignBuilder extends Feign.Builder {
      * Sets the full set of request interceptors for the builder, overwriting any previous
      * interceptors.
      */
-    public AppFeignBuilder requestInterceptors(Iterable<RequestInterceptor> requestInterceptors) {
+    public FeignBuilder requestInterceptors(Iterable<RequestInterceptor> requestInterceptors) {
         this.requestInterceptors.clear();
         for (RequestInterceptor requestInterceptor : requestInterceptors) {
             this.requestInterceptors.add(requestInterceptor);
@@ -106,7 +108,7 @@ public class AppFeignBuilder extends Feign.Builder {
     /**
      * Allows you to override how reflective dispatch works inside of Feign.
      */
-    public AppFeignBuilder invocationHandlerFactory(InvocationHandlerFactory invocationHandlerFactory) {
+    public FeignBuilder invocationHandlerFactory(InvocationHandlerFactory invocationHandlerFactory) {
         this.invocationHandlerFactory = invocationHandlerFactory;
         return this;
     }
@@ -121,7 +123,7 @@ public class AppFeignBuilder extends Feign.Builder {
 
     public Feign build() {
         SynchronousMethodHandler.Factory synchronousMethodHandlerFactory = new SynchronousMethodHandler.Factory(client, retryer, requestInterceptors, logger, logLevel, decode404);
-        AppReflectiveFeign.ParseHandlersByName handlersByName = new AppReflectiveFeign.ParseHandlersByName(
+        MultipleBodyReflectiveFeign.ParseHandlersByName handlersByName = new MultipleBodyReflectiveFeign.ParseHandlersByName(
                 contract,
                 options,
                 encoder,
@@ -129,6 +131,6 @@ public class AppFeignBuilder extends Feign.Builder {
                 errorDecoder,
                 synchronousMethodHandlerFactory
         );
-        return new AppReflectiveFeign(handlersByName, invocationHandlerFactory);
+        return new MultipleBodyReflectiveFeign(handlersByName, invocationHandlerFactory);
     }
 }

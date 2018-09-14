@@ -1,10 +1,10 @@
 package feign;
 
-import org.springframework.cloud.netflix.feign.AnnotatedParameterProcessor;
-import org.springframework.cloud.netflix.feign.annotation.PathVariableParameterProcessor;
-import org.springframework.cloud.netflix.feign.annotation.RequestHeaderParameterProcessor;
-import org.springframework.cloud.netflix.feign.annotation.RequestParamParameterProcessor;
-import org.springframework.cloud.netflix.feign.support.SpringMvcContract;
+import org.springframework.cloud.openfeign.AnnotatedParameterProcessor;
+import org.springframework.cloud.openfeign.annotation.PathVariableParameterProcessor;
+import org.springframework.cloud.openfeign.annotation.RequestHeaderParameterProcessor;
+import org.springframework.cloud.openfeign.annotation.RequestParamParameterProcessor;
+import org.springframework.cloud.openfeign.support.SpringMvcContract;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -32,7 +32,7 @@ import static org.springframework.core.annotation.AnnotatedElementUtils.findMerg
 /**
  * @author Sean(sean.snow @ live.com) createAt 18-1-11.
  */
-public class ApplicationContract extends Contract.BaseContract implements ResourceLoaderAware {
+public class ContractImpl extends Contract.BaseContract implements ResourceLoaderAware {
 
     private static final String ACCEPT = "Accept";
 
@@ -47,15 +47,15 @@ public class ApplicationContract extends Contract.BaseContract implements Resour
     private final Param.Expander expander;
     private ResourceLoader resourceLoader = new DefaultResourceLoader();
 
-    public ApplicationContract() {
+    public ContractImpl() {
         this(Collections.emptyList());
     }
 
-    public ApplicationContract(List<AnnotatedParameterProcessor> annotatedParameterProcessors) {
+    public ContractImpl(List<AnnotatedParameterProcessor> annotatedParameterProcessors) {
         this(annotatedParameterProcessors, new DefaultConversionService());
     }
 
-    public ApplicationContract(List<AnnotatedParameterProcessor> annotatedParameterProcessors, ConversionService conversionService) {
+    public ContractImpl(List<AnnotatedParameterProcessor> annotatedParameterProcessors, ConversionService conversionService) {
         Assert.notNull(annotatedParameterProcessors, "Parameter processors can not be null.");
         Assert.notNull(conversionService, "ConversionService can not be null.");
 
@@ -139,7 +139,7 @@ public class ApplicationContract extends Contract.BaseContract implements Resour
         if (body.size() > 0) {
             List<String> bodyMeta = new ArrayList<>();
             body.forEach((index, type) -> bodyMeta.add(index + ""));
-            data.template().header(AppReflectiveFeign.BODY_META, bodyMeta);
+            data.template().header(MultipleBodyReflectiveFeign.BODY_META, bodyMeta);
         }
 
         if (data.headerMapIndex() != null) {
@@ -178,7 +178,7 @@ public class ApplicationContract extends Contract.BaseContract implements Resour
     @Override
     protected void processAnnotationOnMethod(MethodMetadata data,
                                              Annotation methodAnnotation, Method method) {
-        if (!RequestMapping.class.isInstance(methodAnnotation) && !methodAnnotation
+        if (!(methodAnnotation instanceof RequestMapping) && !methodAnnotation
                 .annotationType().isAnnotationPresent(RequestMapping.class)) {
             return;
         }
