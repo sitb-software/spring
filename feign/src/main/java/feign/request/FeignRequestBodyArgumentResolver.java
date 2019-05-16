@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.Collections;
 
 /**
+ * 如果请求头中存在body meta， 解析多个body 的信息
+ *
  * @author Sean(sean.snow @ live.com) createAt 18-1-11.
  */
 public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodProcessor {
@@ -46,8 +48,11 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         String[] values = webRequest.getHeaderValues(MultipleBodyReflectiveFeign.BODY_META);
+        if (null == values) {
+            return super.resolveArgument(parameter, mavContainer, webRequest, binderFactory);
+        }
         for (String value : values) {
-            Integer index = Integer.parseInt(value);
+            int index = Integer.parseInt(value);
             if (index == parameter.getParameterIndex()) {
                 Object arg = getParameter(parameter, webRequest);
                 String name = Conventions.getVariableNameForParameter(parameter);
@@ -74,9 +79,13 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
         if (null == bodyArg) {
             parameter = parameter.nestedIfOptional();
             body = (FeignRequestBody) readWithMessageConverters(webRequest, parameter, FeignRequestBody.class);
+            // 保存body到请求缓存中,下一次使用
             webRequest.setAttribute(BODY_KEY, body, NativeWebRequest.SCOPE_REQUEST);
         } else {
             body = (FeignRequestBody) bodyArg;
+        }
+        if (null == body) {
+            return null;
         }
 
         Object arg = body.get(parameter.getParameterIndex());

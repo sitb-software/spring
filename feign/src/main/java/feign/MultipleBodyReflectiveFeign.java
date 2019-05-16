@@ -7,6 +7,7 @@ import feign.codec.Decoder;
 import feign.codec.EncodeException;
 import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
+import feign.template.UriUtils;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -14,7 +15,8 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.Map.Entry;
 
-import static feign.Util.*;
+import static feign.Util.checkArgument;
+import static feign.Util.checkNotNull;
 
 /**
  * 主要功能，记录多个body的位置信息
@@ -25,12 +27,17 @@ public class MultipleBodyReflectiveFeign extends Feign {
 
     public static final String BODY_META = "bodyMeta";
 
-    private final ParseHandlersByName targetToHandlersByName;
+    private final MultipleBodyReflectiveFeign.ParseHandlersByName targetToHandlersByName;
     private final InvocationHandlerFactory factory;
+    private final QueryMapEncoder queryMapEncoder;
 
-    MultipleBodyReflectiveFeign(ParseHandlersByName targetToHandlersByName, InvocationHandlerFactory factory) {
+    MultipleBodyReflectiveFeign(MultipleBodyReflectiveFeign.ParseHandlersByName targetToHandlersByName,
+                                InvocationHandlerFactory factory,
+                                QueryMapEncoder queryMapEncoder
+    ) {
         this.targetToHandlersByName = targetToHandlersByName;
         this.factory = factory;
+        this.queryMapEncoder = queryMapEncoder;
     }
 
     /**
@@ -42,7 +49,7 @@ public class MultipleBodyReflectiveFeign extends Feign {
     public <T> T newInstance(Target<T> target) {
         Map<String, MethodHandler> nameToHandler = targetToHandlersByName.apply(target);
         Map<Method, MethodHandler> methodToHandler = new LinkedHashMap<>();
-        List<DefaultMethodHandler> defaultMethodHandlers = new LinkedList<DefaultMethodHandler>();
+        List<DefaultMethodHandler> defaultMethodHandlers = new LinkedList<>();
 
         for (Method method : target.type().getMethods()) {
             if (method.getDeclaringClass() == Object.class) {
@@ -56,7 +63,8 @@ public class MultipleBodyReflectiveFeign extends Feign {
             }
         }
         InvocationHandler handler = factory.create(target, methodToHandler);
-        T proxy = (T) Proxy.newProxyInstance(target.type().getClassLoader(), new Class<?>[]{target.type()}, handler);
+        T proxy = (T) Proxy.newProxyInstance(target.type().getClassLoader(),
+                new Class<?>[]{target.type()}, handler);
 
         for (DefaultMethodHandler defaultMethodHandler : defaultMethodHandlers) {
             defaultMethodHandler.bindTo(proxy);
@@ -71,29 +79,37 @@ public class MultipleBodyReflectiveFeign extends Feign {
         private final Encoder encoder;
         private final Decoder decoder;
         private final ErrorDecoder errorDecoder;
+        private final QueryMapEncoder queryMapEncoder;
         private final SynchronousMethodHandler.Factory factory;
 
-        ParseHandlersByName(Contract contract, Options options, Encoder encoder, Decoder decoder,
-                            ErrorDecoder errorDecoder, SynchronousMethodHandler.Factory factory) {
+        ParseHandlersByName(
+                Contract contract,
+                Options options,
+                Encoder encoder,
+                Decoder decoder,
+                QueryMapEncoder queryMapEncoder,
+                ErrorDecoder errorDecoder,
+                SynchronousMethodHandler.Factory factory) {
             this.contract = contract;
             this.options = options;
             this.factory = factory;
             this.errorDecoder = errorDecoder;
+            this.queryMapEncoder = queryMapEncoder;
             this.encoder = checkNotNull(encoder, "encoder");
             this.decoder = checkNotNull(decoder, "decoder");
         }
 
         public Map<String, MethodHandler> apply(Target key) {
             List<MethodMetadata> metadata = contract.parseAndValidatateMetadata(key.type());
-            Map<String, MethodHandler> result = new LinkedHashMap<>();
+            Map<String, MethodHandler> result = new LinkedHashMap<String, MethodHandler>();
             for (MethodMetadata md : metadata) {
-                BuildTemplateByResolvingArgs buildTemplate;
+                MultipleBodyReflectiveFeign.BuildTemplateByResolvingArgs buildTemplate;
                 if (!md.formParams().isEmpty() && md.template().bodyTemplate() == null) {
-                    buildTemplate = new BuildFormEncodedTemplateFromArgs(md, encoder);
-                } else if (md.bodyIndex() != null || (null != md.template().headers().get(BODY_META))) {
-                    buildTemplate = new BuildEncodedTemplateFromArgs(md, encoder);
+                    buildTemplate = new MultipleBodyReflectiveFeign.BuildFormEncodedTemplateFromArgs(md, encoder, queryMapEncoder);
+                } else if (md.bodyIndex() != null) {
+                    buildTemplate = new MultipleBodyReflectiveFeign.BuildEncodedTemplateFromArgs(md, encoder, queryMapEncoder);
                 } else {
-                    buildTemplate = new BuildTemplateByResolvingArgs(md);
+                    buildTemplate = new MultipleBodyReflectiveFeign.BuildTemplateByResolvingArgs(md, queryMapEncoder);
                 }
                 result.put(md.configKey(),
                         factory.create(key, md, buildTemplate, options, decoder, errorDecoder));
@@ -104,11 +120,13 @@ public class MultipleBodyReflectiveFeign extends Feign {
 
     private static class BuildTemplateByResolvingArgs implements RequestTemplate.Factory {
 
+        private final QueryMapEncoder queryMapEncoder;
         protected final MethodMetadata metadata;
         private final Map<Integer, Expander> indexToExpander = new LinkedHashMap<Integer, Expander>();
 
-        private BuildTemplateByResolvingArgs(MethodMetadata metadata) {
+        private BuildTemplateByResolvingArgs(MethodMetadata metadata, QueryMapEncoder queryMapEncoder) {
             this.metadata = metadata;
+            this.queryMapEncoder = queryMapEncoder;
             if (metadata.indexToExpander() != null) {
                 indexToExpander.putAll(metadata.indexToExpander());
                 return;
@@ -129,11 +147,11 @@ public class MultipleBodyReflectiveFeign extends Feign {
 
         @Override
         public RequestTemplate create(Object[] argv) {
-            RequestTemplate mutable = new RequestTemplate(metadata.template());
+            RequestTemplate mutable = RequestTemplate.from(metadata.template());
             if (metadata.urlIndex() != null) {
                 int urlIndex = metadata.urlIndex();
                 checkArgument(argv[urlIndex] != null, "URI parameter %s was null", urlIndex);
-                mutable.insert(0, String.valueOf(argv[urlIndex]));
+                mutable.target(String.valueOf(argv[urlIndex]));
             }
             Map<String, Object> varBuilder = new LinkedHashMap<String, Object>();
             for (Entry<Integer, Collection<String>> entry : metadata.indexToName().entrySet()) {
@@ -153,14 +171,28 @@ public class MultipleBodyReflectiveFeign extends Feign {
             if (metadata.queryMapIndex() != null) {
                 // add query map parameters after initial resolve so that they take
                 // precedence over any predefined values
-                template = addQueryMapQueryParameters(argv, template);
+                Object value = argv[metadata.queryMapIndex()];
+                Map<String, Object> queryMap = toQueryMap(value);
+                template = addQueryMapQueryParameters(queryMap, template);
             }
 
             if (metadata.headerMapIndex() != null) {
-                template = addHeaderMapHeaders(argv, template);
+                template =
+                        addHeaderMapHeaders((Map<String, Object>) argv[metadata.headerMapIndex()], template);
             }
 
             return template;
+        }
+
+        private Map<String, Object> toQueryMap(Object value) {
+            if (value instanceof Map) {
+                return (Map<String, Object>) value;
+            }
+            try {
+                return queryMapEncoder.encode(value);
+            } catch (EncodeException e) {
+                throw new IllegalStateException(e);
+            }
         }
 
         private Object expandElements(Expander expander, Object value) {
@@ -181,11 +213,9 @@ public class MultipleBodyReflectiveFeign extends Feign {
         }
 
         @SuppressWarnings("unchecked")
-        private RequestTemplate addHeaderMapHeaders(Object[] argv, RequestTemplate mutable) {
-            Map<Object, Object> headerMap = (Map<Object, Object>) argv[metadata.headerMapIndex()];
-            for (Entry<Object, Object> currEntry : headerMap.entrySet()) {
-                checkState(currEntry.getKey().getClass() == String.class, "HeaderMap key must be a String: %s", currEntry.getKey());
-
+        private RequestTemplate addHeaderMapHeaders(Map<String, Object> headerMap,
+                                                    RequestTemplate mutable) {
+            for (Entry<String, Object> currEntry : headerMap.entrySet()) {
                 Collection<String> values = new ArrayList<>();
 
                 Object currValue = currEntry.getValue();
@@ -197,47 +227,37 @@ public class MultipleBodyReflectiveFeign extends Feign {
                     values.add(currValue == null ? null : currValue.toString());
                 }
 
-                mutable.header((String) currEntry.getKey(), values);
+                mutable.header(currEntry.getKey(), values);
             }
             return mutable;
         }
 
         @SuppressWarnings("unchecked")
-        private RequestTemplate addQueryMapQueryParameters(Object[] argv, RequestTemplate mutable) {
-            Map<Object, Object> queryMap = (Map<Object, Object>) argv[metadata.queryMapIndex()];
-            for (Entry<Object, Object> currEntry : queryMap.entrySet()) {
-                checkState(currEntry.getKey().getClass() == String.class, "QueryMap key must be a String: %s", currEntry.getKey());
-
-                Collection<String> values = new ArrayList<String>();
+        private RequestTemplate addQueryMapQueryParameters(Map<String, Object> queryMap, RequestTemplate mutable) {
+            for (Entry<String, Object> currEntry : queryMap.entrySet()) {
+                Collection<String> values = new ArrayList<>();
 
                 boolean encoded = metadata.queryMapEncoded();
                 Object currValue = currEntry.getValue();
                 if (currValue instanceof Iterable<?>) {
-                    Iterator<?> iter = ((Iterable<?>) currValue).iterator();
-                    while (iter.hasNext()) {
-                        Object nextObject = iter.next();
-                        values.add(nextObject == null ? null : encoded ? nextObject.toString() : RequestTemplate.urlEncode(nextObject.toString()));
+                    for (Object nextObject : ((Iterable<?>) currValue)) {
+                        values.add(nextObject == null ? null
+                                : encoded ? nextObject.toString()
+                                : UriUtils.encode(nextObject.toString()));
                     }
                 } else {
-                    values.add(currValue == null ? null : encoded ? currValue.toString() : RequestTemplate.urlEncode(currValue.toString()));
+                    values.add(currValue == null ? null
+                            : encoded ? currValue.toString() : UriUtils.encode(currValue.toString()));
                 }
 
-                mutable.query(true, encoded ? (String) currEntry.getKey() : RequestTemplate.urlEncode(currEntry.getKey()), values);
+                mutable.query(encoded ? currEntry.getKey() : UriUtils.encode(currEntry.getKey()), values);
             }
             return mutable;
         }
 
         protected RequestTemplate resolve(Object[] argv, RequestTemplate mutable,
                                           Map<String, Object> variables) {
-            // Resolving which variable names are already encoded using their indices
-            Map<String, Boolean> variableToEncoded = new LinkedHashMap<String, Boolean>();
-            for (Entry<Integer, Boolean> entry : metadata.indexToEncoded().entrySet()) {
-                Collection<String> names = metadata.indexToName().get(entry.getKey());
-                for (String name : names) {
-                    variableToEncoded.put(name, entry.getValue());
-                }
-            }
-            return mutable.resolve(variables, variableToEncoded);
+            return mutable.resolve(variables);
         }
     }
 
@@ -245,8 +265,9 @@ public class MultipleBodyReflectiveFeign extends Feign {
 
         private final Encoder encoder;
 
-        private BuildFormEncodedTemplateFromArgs(MethodMetadata metadata, Encoder encoder) {
-            super(metadata);
+        private BuildFormEncodedTemplateFromArgs(MethodMetadata metadata, Encoder encoder,
+                                                 QueryMapEncoder queryMapEncoder) {
+            super(metadata, queryMapEncoder);
             this.encoder = encoder;
         }
 
@@ -274,8 +295,9 @@ public class MultipleBodyReflectiveFeign extends Feign {
 
         private final Encoder encoder;
 
-        private BuildEncodedTemplateFromArgs(MethodMetadata metadata, Encoder encoder) {
-            super(metadata);
+        private BuildEncodedTemplateFromArgs(MethodMetadata metadata, Encoder encoder,
+                                             QueryMapEncoder queryMapEncoder) {
+            super(metadata, queryMapEncoder);
             this.encoder = encoder;
         }
 
@@ -287,28 +309,17 @@ public class MultipleBodyReflectiveFeign extends Feign {
             if (null != metadata.bodyIndex()) {
                 body = argv[metadata.bodyIndex()];
             }
+            // 把多个body放进map中
             Collection<String> bodyMeta = mutable.headers().get(BODY_META);
             if (null != bodyMeta && bodyMeta.size() > 0) {
                 FeignRequestBody requestBody = new FeignRequestBody();
-                List<String> newBodyMeta = new ArrayList<>();
 
                 bodyMeta.forEach(i -> {
                     Integer index = Integer.parseInt(i);
                     Object arg = argv[index];
-//                    if (arg instanceof Pageable) {
-//                        requestBody.put(-index, arg);
-//                    } else {
                     requestBody.put(index, arg);
-                    newBodyMeta.add(i);
-//                    }
                 });
-//                if (requestBody.size() == 1 && requestBody.values().toArray()[0] instanceof Pageable) {
-//                    mutable.header(BODY_META);
-//                    body = requestBody.values().toArray()[0];
-//                } else {
-                mutable.header(BODY_META, newBodyMeta);
                 body = requestBody;
-//                }
             }
 
             checkArgument(body != null, "Body parameter %s was null", metadata.bodyIndex());
