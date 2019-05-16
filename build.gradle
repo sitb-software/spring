@@ -1,10 +1,8 @@
 plugins {
-    id "io.franzbecker.gradle-lombok" version "1.14"
+    id "io.franzbecker.gradle-lombok" version "2.2"
 }
 
 allprojects {
-
-    apply from: 'https://onegit.app/enterprise/public/raw/master/wrapper.gradle'
 
     group 'software.sitb.spring'
 
