@@ -210,7 +210,7 @@ public class MultipleBodyContract extends Contract.BaseContract implements Resou
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         int count = parameterAnnotations.length;
 
-        Map<Integer, Type> body = new HashMap<>();
+        Map<String, Type> body = new HashMap<>();
 
         for (int i = 0; i < count; i++) {
             boolean isHttpAnnotation = false;
@@ -222,17 +222,15 @@ public class MultipleBodyContract extends Contract.BaseContract implements Resou
             } else if (!isHttpAnnotation) {
                 checkState(md.formParams().isEmpty(), "Body parameters cannot be used with form parameters.");
 //                checkState(md.bodyIndex() == null, "Method has too many Body parameters: %s", method);
-//                md.bodyIndex(i);
+                md.bodyIndex(i);
 //                md.bodyType(Types.resolve(targetType, targetType, genericParameterTypes[i]));
                 // 使用自定义的body位置处理
-                body.put(i, Types.resolve(targetType, targetType, method.getGenericParameterTypes()[i]));
+                body.put(Integer.toString(i), Types.resolve(targetType, targetType, method.getGenericParameterTypes()[i]));
             }
         }
 
         if (body.size() > 0) {
-            List<String> bodyMeta = new ArrayList<>();
-            body.forEach((index, type) -> bodyMeta.add(index + ""));
-            md.template().header(MultipleBodyReflectiveFeign.BODY_META, bodyMeta);
+            md.template().header(MultipleBodyReflectiveFeign.BODY_META, body.keySet());
         }
 
         if (md.headerMapIndex() != null) {
