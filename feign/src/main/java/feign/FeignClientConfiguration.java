@@ -10,7 +10,7 @@ public class FeignClientConfiguration {
 
     @Bean
     public Contract contract() {
-        return new ContractImpl();
+        return new MultipleBodyContract();
     }
 
     @Bean

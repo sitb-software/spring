@@ -19,9 +19,10 @@ import static feign.Util.checkArgument;
 import static feign.Util.checkNotNull;
 
 /**
- * 主要功能，记录多个body的位置信息
+ * 主要功能，支持多个body的位置信息
  * see {@link ParseHandlersByName}
  * see {@link BuildTemplateByResolvingArgs}
+ * see {@link BuildEncodedTemplateFromArgs}
  */
 public class MultipleBodyReflectiveFeign extends Feign {
 
@@ -177,8 +178,7 @@ public class MultipleBodyReflectiveFeign extends Feign {
             }
 
             if (metadata.headerMapIndex() != null) {
-                template =
-                        addHeaderMapHeaders((Map<String, Object>) argv[metadata.headerMapIndex()], template);
+                template = addHeaderMapHeaders((Map<String, Object>) argv[metadata.headerMapIndex()], template);
             }
 
             return template;

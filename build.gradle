@@ -13,7 +13,7 @@ allprojects {
 }
 
 [
-        'feign': '1.0.13.RELEASE'
+        'feign': '1.0.14.RELEASE'
 ].each { name, version ->
     project(":${name}").version = version
 }

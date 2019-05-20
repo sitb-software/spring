@@ -37,23 +37,21 @@ import static java.util.Optional.ofNullable;
 import static org.springframework.core.annotation.AnnotatedElementUtils.findMergedAnnotation;
 
 /**
- * 实现参考
- * {@link SpringMvcContract}
+ * 实现参考,主要变更getMethodMetadata 获取参数
+ * see {@link SpringMvcContract}
+ * see {@link  #parseAndValidateMetadata}
  *
  * @author Sean(sean.snow @ live.com) createAt 18-1-11.
  */
-public class ContractImpl extends Contract.BaseContract implements ResourceLoaderAware {
-
+public class MultipleBodyContract extends Contract.BaseContract implements ResourceLoaderAware {
 
     private static final String ACCEPT = "Accept";
 
     private static final String CONTENT_TYPE = "Content-Type";
 
-    private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor
-            .valueOf(String.class);
+    private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
 
-    private static final TypeDescriptor ITERABLE_TYPE_DESCRIPTOR = TypeDescriptor
-            .valueOf(Iterable.class);
+    private static final TypeDescriptor ITERABLE_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Iterable.class);
 
     private static final ParameterNameDiscoverer PARAMETER_NAME_DISCOVERER = new DefaultParameterNameDiscoverer();
 
@@ -67,16 +65,16 @@ public class ContractImpl extends Contract.BaseContract implements ResourceLoade
 
     private ResourceLoader resourceLoader = new DefaultResourceLoader();
 
-    public ContractImpl() {
+    public MultipleBodyContract() {
         this(Collections.emptyList());
     }
 
-    public ContractImpl(
+    public MultipleBodyContract(
             List<AnnotatedParameterProcessor> annotatedParameterProcessors) {
         this(annotatedParameterProcessors, new DefaultConversionService());
     }
 
-    public ContractImpl(
+    public MultipleBodyContract(
             List<AnnotatedParameterProcessor> annotatedParameterProcessors,
             ConversionService conversionService) {
         Assert.notNull(annotatedParameterProcessors,
@@ -135,9 +133,27 @@ public class ContractImpl extends Contract.BaseContract implements ResourceLoade
         this.resourceLoader = resourceLoader;
     }
 
+    @Override
+    protected void processAnnotationOnClass(MethodMetadata data, Class<?> clz) {
+        if (clz.getInterfaces().length == 0) {
+            RequestMapping classAnnotation = findMergedAnnotation(clz,
+                    RequestMapping.class);
+            if (classAnnotation != null) {
+                // Prepend path from class annotation if specified
+                if (classAnnotation.value().length > 0) {
+                    String pathValue = emptyToNull(classAnnotation.value()[0]);
+                    pathValue = resolve(pathValue);
+                    if (!pathValue.startsWith("/")) {
+                        pathValue = "/" + pathValue;
+                    }
+                    data.template().uri(pathValue);
+                }
+            }
+        }
+    }
+
     private static void checkMapString(String name, Class<?> type, Type genericType) {
-        checkState(Map.class.isAssignableFrom(type),
-                "%s parameter must be a Map: %s", name, type);
+        checkState(Map.class.isAssignableFrom(type), "%s parameter must be a Map: %s", name, type);
         checkMapKeys(name, genericType);
     }
 
@@ -171,37 +187,66 @@ public class ContractImpl extends Contract.BaseContract implements ResourceLoade
     }
 
     @Override
-    protected void processAnnotationOnClass(MethodMetadata data, Class<?> clz) {
-        if (clz.getInterfaces().length == 0) {
-            RequestMapping classAnnotation = findMergedAnnotation(clz,
-                    RequestMapping.class);
-            if (classAnnotation != null) {
-                // Prepend path from class annotation if specified
-                if (classAnnotation.value().length > 0) {
-                    String pathValue = emptyToNull(classAnnotation.value()[0]);
-                    pathValue = resolve(pathValue);
-                    if (!pathValue.startsWith("/")) {
-                        pathValue = "/" + pathValue;
-                    }
-                    data.template().uri(pathValue);
-                }
-            }
-        }
-    }
-
-    private String resolve(String value) {
-        if (StringUtils.hasText(value)
-                && this.resourceLoader instanceof ConfigurableApplicationContext) {
-            return ((ConfigurableApplicationContext) this.resourceLoader).getEnvironment()
-                    .resolvePlaceholders(value);
-        }
-        return value;
-    }
-
-    @Override
     public MethodMetadata parseAndValidateMetadata(Class<?> targetType, Method method) {
         this.processedMethods.put(Feign.configKey(targetType, method), method);
-        MethodMetadata md = getMethodMetadata(targetType, method);
+
+        MethodMetadata md = new MethodMetadata();
+        md.returnType(Types.resolve(targetType, targetType, method.getGenericReturnType()));
+        md.configKey(Feign.configKey(targetType, method));
+
+        if (targetType.getInterfaces().length == 1) {
+            processAnnotationOnClass(md, targetType.getInterfaces()[0]);
+        }
+        processAnnotationOnClass(md, targetType);
+
+        for (Annotation methodAnnotation : method.getAnnotations()) {
+            processAnnotationOnMethod(md, methodAnnotation, method);
+        }
+        checkState(md.template().method() != null, "Method %s not annotated with HTTP method type (ex. GET, POST)", method.getName());
+
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        Type[] genericParameterTypes = method.getGenericParameterTypes();
+
+        Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+        int count = parameterAnnotations.length;
+
+        Map<Integer, Type> body = new HashMap<>();
+
+        for (int i = 0; i < count; i++) {
+            boolean isHttpAnnotation = false;
+            if (parameterAnnotations[i] != null) {
+                isHttpAnnotation = processAnnotationsOnParameter(md, parameterAnnotations[i], i);
+            }
+            if (parameterTypes[i] == URI.class) {
+                md.urlIndex(i);
+            } else if (!isHttpAnnotation) {
+                checkState(md.formParams().isEmpty(), "Body parameters cannot be used with form parameters.");
+//                checkState(md.bodyIndex() == null, "Method has too many Body parameters: %s", method);
+//                md.bodyIndex(i);
+//                md.bodyType(Types.resolve(targetType, targetType, genericParameterTypes[i]));
+                // 使用自定义的body位置处理
+                body.put(i, Types.resolve(targetType, targetType, method.getGenericParameterTypes()[i]));
+            }
+        }
+
+        if (body.size() > 0) {
+            List<String> bodyMeta = new ArrayList<>();
+            body.forEach((index, type) -> bodyMeta.add(index + ""));
+            md.template().header(MultipleBodyReflectiveFeign.BODY_META, bodyMeta);
+        }
+
+        if (md.headerMapIndex() != null) {
+            checkMapString("HeaderMap", parameterTypes[md.headerMapIndex()],
+                    genericParameterTypes[md.headerMapIndex()]);
+        }
+
+        if (md.queryMapIndex() != null) {
+            if (Map.class.isAssignableFrom(parameterTypes[md.queryMapIndex()])) {
+                checkMapKeys("QueryMap", genericParameterTypes[md.queryMapIndex()]);
+            }
+        }
+
+        // MethodMetadata md = super.parseAndValidateMetadata(targetType, method);
 
         RequestMapping classAnnotation = findMergedAnnotation(targetType,
                 RequestMapping.class);
@@ -223,45 +268,10 @@ public class ContractImpl extends Contract.BaseContract implements ResourceLoade
         return md;
     }
 
-    private void parseProduces(MethodMetadata md, Method method,
-                               RequestMapping annotation) {
-        String[] serverProduces = annotation.produces();
-        String clientAccepts = serverProduces.length == 0 ? null
-                : emptyToNull(serverProduces[0]);
-        if (clientAccepts != null) {
-            md.template().header(ACCEPT, clientAccepts);
-        }
-    }
-
-    private void parseConsumes(MethodMetadata md, Method method,
-                               RequestMapping annotation) {
-        String[] serverConsumes = annotation.consumes();
-        String clientProduces = serverConsumes.length == 0 ? null
-                : emptyToNull(serverConsumes[0]);
-        if (clientProduces != null) {
-            md.template().header(CONTENT_TYPE, clientProduces);
-        }
-    }
-
-    private void parseHeaders(MethodMetadata md, Method method,
-                              RequestMapping annotation) {
-        // TODO: only supports one header value per key
-        if (annotation.headers() != null && annotation.headers().length > 0) {
-            for (String header : annotation.headers()) {
-                int index = header.indexOf('=');
-                if (!header.contains("!=") && index >= 0) {
-                    md.template().header(resolve(header.substring(0, index)),
-                            resolve(header.substring(index + 1).trim()));
-                }
-            }
-        }
-    }
-
     @Override
     protected void processAnnotationOnMethod(MethodMetadata data,
                                              Annotation methodAnnotation, Method method) {
-        if (!RequestMapping.class.isInstance(methodAnnotation) && !methodAnnotation
-                .annotationType().isAnnotationPresent(RequestMapping.class)) {
+        if (!RequestMapping.class.isInstance(methodAnnotation) && !methodAnnotation.annotationType().isAnnotationPresent(RequestMapping.class)) {
             return;
         }
 
@@ -297,7 +307,22 @@ public class ContractImpl extends Contract.BaseContract implements ResourceLoade
         // headers
         parseHeaders(data, method, methodMapping);
 
-        data.indexToExpander(new LinkedHashMap<Integer, Param.Expander>());
+        data.indexToExpander(new LinkedHashMap<>());
+    }
+
+    private String resolve(String value) {
+        if (StringUtils.hasText(value) && this.resourceLoader instanceof ConfigurableApplicationContext) {
+            return ((ConfigurableApplicationContext) this.resourceLoader).getEnvironment().resolvePlaceholders(value);
+        }
+        return value;
+    }
+
+    private void checkAtMostOne(Method method, Object[] values, String fieldName) {
+        checkState(values != null && (values.length == 0 || values.length == 1), "Method %s can only contain at most 1 %s field. Found: %s", method.getName(), fieldName, values == null ? null : Arrays.asList(values));
+    }
+
+    private void checkOne(Method method, Object[] values, String fieldName) {
+        checkState(values != null && values.length == 1, "Method %s can only contain 1 %s field. Found: %s", method.getName(), fieldName, values == null ? null : Arrays.asList(values));
     }
 
     @Override
@@ -336,80 +361,38 @@ public class ContractImpl extends Contract.BaseContract implements ResourceLoade
         return isHttpAnnotation;
     }
 
-    private MethodMetadata getMethodMetadata(Class<?> targetType, Method method) {
-        MethodMetadata data = new MethodMetadata();
-        data.returnType(Types.resolve(targetType, targetType, method.getGenericReturnType()));
-        data.configKey(Feign.configKey(targetType, method));
-
-        if (targetType.getInterfaces().length == 1) {
-            processAnnotationOnClass(data, targetType.getInterfaces()[0]);
+    private void parseProduces(MethodMetadata md, Method method,
+                               RequestMapping annotation) {
+        String[] serverProduces = annotation.produces();
+        String clientAccepts = serverProduces.length == 0 ? null
+                : emptyToNull(serverProduces[0]);
+        if (clientAccepts != null) {
+            md.template().header(ACCEPT, clientAccepts);
         }
-        processAnnotationOnClass(data, targetType);
-
-
-        for (Annotation methodAnnotation : method.getAnnotations()) {
-            processAnnotationOnMethod(data, methodAnnotation, method);
-        }
-        checkState(data.template().method() != null,
-                "Method %s not annotated with HTTP method type (ex. GET, POST)",
-                method.getName());
-        Class<?>[] parameterTypes = method.getParameterTypes();
-        Type[] genericParameterTypes = method.getGenericParameterTypes();
-
-        Annotation[][] parameterAnnotations = method.getParameterAnnotations();
-        int count = parameterAnnotations.length;
-
-        Map<Integer, Type> body = new HashMap<>();
-
-        for (int i = 0; i < count; i++) {
-            boolean isHttpAnnotation = false;
-            if (parameterAnnotations[i] != null) {
-                isHttpAnnotation = processAnnotationsOnParameter(data, parameterAnnotations[i], i);
-            }
-            if (parameterTypes[i] == URI.class) {
-                data.urlIndex(i);
-            } else if (!isHttpAnnotation) {
-                checkState(data.formParams().isEmpty(),
-                        "Body parameters cannot be used with form parameters.");
-//                checkState(data.bodyIndex() == null, "Method has too many Body parameters: %s", method);
-//                data.bodyIndex(i);
-//                data.bodyType(Types.resolve(targetType, targetType, genericParameterTypes[i]));
-                // 使用自定义的body位置处理
-                body.put(i, Types.resolve(targetType, targetType, method.getGenericParameterTypes()[i]));
-            }
-        }
-
-        if (body.size() > 0) {
-            List<String> bodyMeta = new ArrayList<>();
-            body.forEach((index, type) -> bodyMeta.add(index + ""));
-            data.template().header(MultipleBodyReflectiveFeign.BODY_META, bodyMeta);
-        }
-
-        if (data.headerMapIndex() != null) {
-            checkMapString("HeaderMap", parameterTypes[data.headerMapIndex()],
-                    genericParameterTypes[data.headerMapIndex()]);
-        }
-
-        if (data.queryMapIndex() != null) {
-            if (Map.class.isAssignableFrom(parameterTypes[data.queryMapIndex()])) {
-                checkMapKeys("QueryMap", genericParameterTypes[data.queryMapIndex()]);
-            }
-        }
-
-        return data;
     }
 
-    private void checkAtMostOne(Method method, Object[] values, String fieldName) {
-        checkState(values != null && (values.length == 0 || values.length == 1),
-                "Method %s can only contain at most 1 %s field. Found: %s",
-                method.getName(), fieldName,
-                values == null ? null : Arrays.asList(values));
+    private void parseConsumes(MethodMetadata md, Method method,
+                               RequestMapping annotation) {
+        String[] serverConsumes = annotation.consumes();
+        String clientProduces = serverConsumes.length == 0 ? null
+                : emptyToNull(serverConsumes[0]);
+        if (clientProduces != null) {
+            md.template().header(CONTENT_TYPE, clientProduces);
+        }
     }
 
-    private void checkOne(Method method, Object[] values, String fieldName) {
-        checkState(values != null && values.length == 1,
-                "Method %s can only contain 1 %s field. Found: %s", method.getName(),
-                fieldName, values == null ? null : Arrays.asList(values));
+    private void parseHeaders(MethodMetadata md, Method method,
+                              RequestMapping annotation) {
+        // TODO: only supports one header value per key
+        if (annotation.headers() != null && annotation.headers().length > 0) {
+            for (String header : annotation.headers()) {
+                int index = header.indexOf('=');
+                if (!header.contains("!=") && index >= 0) {
+                    md.template().header(resolve(header.substring(0, index)),
+                            resolve(header.substring(index + 1).trim()));
+                }
+            }
+        }
     }
 
     private Map<Class<? extends Annotation>, AnnotatedParameterProcessor> toAnnotatedArgumentProcessorMap(
@@ -488,8 +471,7 @@ public class ContractImpl extends Contract.BaseContract implements ResourceLoade
 
         Param.Expander getExpander(TypeDescriptor typeDescriptor) {
             return value -> {
-                Object converted = this.conversionService.convert(value, typeDescriptor,
-                        STRING_TYPE_DESCRIPTOR);
+                Object converted = this.conversionService.convert(value, typeDescriptor, STRING_TYPE_DESCRIPTOR);
                 return (String) converted;
             };
         }
@@ -503,8 +485,7 @@ public class ContractImpl extends Contract.BaseContract implements ResourceLoade
 
         private final int parameterIndex;
 
-        SimpleAnnotatedParameterContext(MethodMetadata methodMetadata,
-                                        int parameterIndex) {
+        SimpleAnnotatedParameterContext(MethodMetadata methodMetadata, int parameterIndex) {
             this.methodMetadata = methodMetadata;
             this.parameterIndex = parameterIndex;
         }
