@@ -26,7 +26,7 @@ import static feign.Util.checkNotNull;
  */
 public class MultipleBodyReflectiveFeign extends Feign {
 
-    public static final String BODY_META = "bodyMeta";
+    public static final String BODY_META = "X-Feign-Body-Meta";
 
     private final MultipleBodyReflectiveFeign.ParseHandlersByName targetToHandlersByName;
     private final InvocationHandlerFactory factory;
