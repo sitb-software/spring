@@ -30,11 +30,16 @@ public class FeignRequestBodyArgumentResolverConfiguration implements CommandLin
     public void run(String... args) throws Exception {
         RequestMappingHandlerAdapter requestMappingHandlerAdapter = applicationContext.getBean(RequestMappingHandlerAdapter.class);
         List<HandlerMethodArgumentResolver> defaultArgumentResolvers = requestMappingHandlerAdapter.getArgumentResolvers();
-        List<HandlerMethodArgumentResolver> argumentResolvers = new ArrayList<>(defaultArgumentResolvers);
-        for (int i = 0; i < defaultArgumentResolvers.size(); i++) {
-            if (defaultArgumentResolvers.get(i) instanceof RequestResponseBodyMethodProcessor) {
-                argumentResolvers.add(i, feignRequestBodyArgumentResolver());
-                break;
+        List<HandlerMethodArgumentResolver> argumentResolvers = new ArrayList<>();
+        if (null == defaultArgumentResolvers) {
+            argumentResolvers.add(feignRequestBodyArgumentResolver());
+        } else {
+            argumentResolvers.addAll(defaultArgumentResolvers);
+            for (int i = 0; i < defaultArgumentResolvers.size(); i++) {
+                if (defaultArgumentResolvers.get(i) instanceof RequestResponseBodyMethodProcessor) {
+                    argumentResolvers.add(i, feignRequestBodyArgumentResolver());
+                    break;
+                }
             }
         }
         requestMappingHandlerAdapter.setArgumentResolvers(argumentResolvers);
