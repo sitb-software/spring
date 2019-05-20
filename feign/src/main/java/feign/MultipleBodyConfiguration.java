@@ -6,7 +6,7 @@ import feign.codec.ErrorDecoder;
 import feign.codec.ExceptionErrorDecoder;
 import org.springframework.context.annotation.Bean;
 
-public class FeignClientConfiguration {
+public class MultipleBodyConfiguration {
 
     @Bean
     public Contract contract() {
