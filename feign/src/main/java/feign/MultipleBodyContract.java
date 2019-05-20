@@ -210,8 +210,6 @@ public class MultipleBodyContract extends Contract.BaseContract implements Resou
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         int count = parameterAnnotations.length;
 
-        Map<String, Type> body = new HashMap<>();
-
         for (int i = 0; i < count; i++) {
             boolean isHttpAnnotation = false;
             if (parameterAnnotations[i] != null) {
@@ -225,12 +223,9 @@ public class MultipleBodyContract extends Contract.BaseContract implements Resou
                 md.bodyIndex(i);
 //                md.bodyType(Types.resolve(targetType, targetType, genericParameterTypes[i]));
                 // 使用自定义的body位置处理
-                body.put(Integer.toString(i), Types.resolve(targetType, targetType, method.getGenericParameterTypes()[i]));
-            }
-        }
 
-        if (body.size() > 0) {
-            md.template().header(MultipleBodyReflectiveFeign.BODY_META, body.keySet());
+                md.template().header(MultipleBodyReflectiveFeign.BODY_META, Integer.toString(i));
+            }
         }
 
         if (md.headerMapIndex() != null) {

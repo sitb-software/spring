@@ -13,7 +13,7 @@ allprojects {
 }
 
 [
-        'feign': '1.0.15.RELEASE'
+        'feign': '1.0.16.RELEASE'
 ].each { name, version ->
     project(":${name}").version = version
 }
@@ -22,7 +22,7 @@ subprojects {
 
     apply from: 'https://onegit.app/enterprise/public/raw/master/libraries.gradle'
     apply from: 'https://onegit.app/enterprise/public/raw/master/java.gradle'
-    apply from: 'https://onegit.app/enterprise/public/raw/master/publishing.gradle'
+    apply from: 'https://onegit.app/enterprise/public/raw/master/publishing-with-source.gradle'
     apply plugin: 'idea'
 
 }

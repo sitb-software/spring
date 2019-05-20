@@ -97,15 +97,23 @@ public class FeignRequestBodyArgumentResolver extends RequestResponseBodyMethodP
         if (ServletRequest.class.isAssignableFrom(parameter.getParameterType())) {
             return false;
         }
-        String[] values = request.getHeaderValues(MultipleBodyReflectiveFeign.BODY_META);
-        if (null == values || values.length == 0) {
+        String values = request.getHeader(MultipleBodyReflectiveFeign.BODY_META);
+        if (null == values || values.isEmpty()) {
             return false;
         }
-        return Arrays.stream(values)
-                .mapToInt(Integer::parseInt)
-                .filter(item -> item == parameter.getParameterIndex())
-                .findFirst()
-                .isPresent();
+        String[] tmp = values.split(",");
+        return Arrays.stream(tmp)
+                .anyMatch(item -> {
+                    if (null == item || item.isEmpty()) {
+                        return false;
+                    }
+                    try {
+                        int idx = Integer.parseInt(item.trim());
+                        return idx == parameter.getParameterIndex();
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
     }
 
 }
